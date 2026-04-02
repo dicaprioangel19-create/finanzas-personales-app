@@ -1,813 +1,499 @@
-:root {
-  --bg: #f5f7fb;
-  --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --border: #e5e7eb;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #2563eb;
-  --primary-soft: #dbeafe;
-  --success: #16a34a;
-  --success-soft: #dcfce7;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --warning: #d97706;
-  --warning-soft: #ffedd5;
-  --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  --radius: 18px;
-}
-
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
-
-button, input, select, textarea { font: inherit; }
-
-.app {
-  width: min(1100px, calc(100% - 32px));
-  margin: 32px auto 50px;
-}
-
-.app-header { margin-bottom: 24px; }
-
-.app-header h1 {
-  margin: 0 0 8px;
-  font-size: 2rem;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--muted);
-}
-
-.main-grid {
-  display: grid;
-  gap: 20px;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 20px;
-}
-
-.section-title {
-  margin: 0 0 18px;
-  font-size: 1.2rem;
-}
-
-.section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.section-note {
-  margin: -10px 0 0;
-  color: var(--muted);
-  font-size: 0.95rem;
-}
-
-.form-grid,
-.filters-grid,
-.budget-form-grid,
-.security-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.field-full { grid-column: 1 / -1; }
-
-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.label-invisible { visibility: hidden; }
-
-input,
-select {
-  width: 100%;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  outline: none;
-  transition: 0.2s ease;
-}
-
-input:focus,
-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-}
-
-.form-actions,
-.security-actions,
-.lock-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-  flex-wrap: wrap;
-}
-
-.btn {
-  border: none;
-  border-radius: 12px;
-  padding: 12px 16px;
-  cursor: pointer;
-  font-weight: 700;
-  transition: 0.2s ease;
-}
-
-.btn:hover { transform: translateY(-1px); }
-
-.btn-primary {
-  background: var(--primary);
-  color: #ffffff;
-}
-
-.btn-secondary {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.btn-edit {
-  background: var(--primary-soft);
-  color: var(--primary);
-}
-
-.btn-delete {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
-.mensaje {
-  min-height: 24px;
-  margin: 14px 0 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.mensaje.success { color: var(--success); }
-.mensaje.error { color: var(--danger); }
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.stat-card,
-.budget-card,
-.habit-card {
-  border-radius: 16px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--border);
-}
-
-.stat-card strong,
-.budget-card strong,
-.habit-card strong {
-  font-size: 1.4rem;
-}
-
-.stat-label,
-.habit-label {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.stat-income { background: var(--success-soft); }
-.stat-expense { background: var(--danger-soft); }
-.stat-balance { background: var(--primary-soft); }
-
-.filter-action,
-.budget-action {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-/* LOCK SCREEN */
-.lock-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background:
-    radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 35%),
-    var(--bg);
-}
-
-.lock-card {
-  width: min(420px, 100%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  padding: 24px;
-}
-
-.lock-title {
-  margin: 0 0 8px;
-  font-size: 1.6rem;
-}
-
-.lock-description {
-  margin: 0 0 18px;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.lock-setup-group {
-  display: grid;
-  gap: 14px;
-}
-
-/* SEGURIDAD */
-.security-status-box {
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-2);
-  margin-bottom: 16px;
-  display: grid;
-  gap: 8px;
-}
-
-/* PRESUPUESTO */
-.budget-summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0 14px;
-  flex-wrap: wrap;
-}
-
-.budget-title {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.budget-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.budget-progress-wrap {
-  margin-top: 18px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-2);
-}
-
-.budget-progress-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.budget-status-label { font-weight: 700; }
-
-.budget-progress-text {
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.budget-progress-track {
-  width: 100%;
-  height: 16px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.budget-progress-fill {
-  width: 0%;
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.35s ease;
-  background: linear-gradient(90deg, #16a34a, #22c55e);
-}
-
-.budget-progress-fill.warning {
-  background: linear-gradient(90deg, #d97706, #f59e0b);
-}
-
-.budget-progress-fill.danger {
-  background: linear-gradient(90deg, #dc2626, #ef4444);
-}
-
-/* HÁBITOS */
-.habits-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.habit-detail {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.4;
-}
-
-.insights-box {
-  margin-top: 18px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-2);
-  padding: 16px;
-}
-
-.insights-title {
-  margin: 0 0 14px;
-  font-size: 1.05rem;
-}
-
-.insights-list {
-  display: grid;
-  gap: 10px;
-}
-
-.insight-item {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #ffffff;
-  padding: 12px 14px;
-  line-height: 1.45;
-}
-
-/* SALDO ACUMULADO */
-.balance-chart-wrapper {
-  display: grid;
-  gap: 16px;
-}
-
-.balance-chart-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.mini-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-weight: 600;
-}
-
-.mini-legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  display: inline-block;
-}
-
-.mini-legend-balance { background: #2563eb; }
-.mini-legend-drop { background: #dc2626; }
-
-.line-canvas-box {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 18px;
-  padding: 16px;
-  overflow-x: auto;
-}
-
-#grafico-saldo-acumulado {
-  width: 100%;
-  max-width: 100%;
-  display: block;
-  height: auto;
-  min-width: 760px;
-}
-
-/* GRÁFICO CIRCULAR */
-.chart-wrapper {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
-  align-items: center;
-}
-
-.chart-canvas-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 18px;
-  min-height: 356px;
-}
-
-#grafico-categorias {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-.chart-legend {
-  display: grid;
-  gap: 12px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 14px;
-}
-
-.legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
-.legend-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.legend-title-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-}
-
-.legend-name {
-  font-weight: 700;
-  word-break: break-word;
-}
-
-.legend-amount {
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.legend-percent {
-  display: block;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-/* CATEGORÍAS */
-.categories-list {
-  display: grid;
-  gap: 16px;
-}
-
-.category-item {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 14px;
-  padding: 14px;
-}
-
-.category-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 10px;
-}
-
-.category-name {
-  font-weight: 700;
-  word-break: break-word;
-}
-
-.category-meta {
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.category-amount {
-  display: block;
-  font-weight: 700;
-}
-
-.category-percent {
-  display: block;
-  font-size: 0.9rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.progress-track {
-  width: 100%;
-  height: 14px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  width: 0;
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
-  border-radius: 999px;
-  transition: width 0.35s ease;
-}
-
-/* HISTORIAL */
-.history-card { padding-bottom: 12px; }
-
-.history-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.history-count {
-  color: var(--muted);
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.history-list {
-  display: grid;
-  gap: 14px;
-}
-
-.movimiento-item {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 16px;
-  background: var(--surface-2);
-}
-
-.movimiento-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.movimiento-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-transform: capitalize;
-}
-
-.badge-ingreso {
-  background: var(--success-soft);
-  color: var(--success);
-}
-
-.badge-gasto {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
-.movimiento-monto {
-  font-size: 1.1rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.monto-ingreso { color: var(--success); }
-.monto-gasto { color: var(--danger); }
-
-.movimiento-body {
-  display: grid;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.movimiento-categoria {
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.movimiento-descripcion {
-  color: var(--text);
-  word-break: break-word;
-}
-
-.movimiento-fecha {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.movimiento-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.empty-state {
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  text-align: center;
-  color: var(--muted);
-  background: var(--surface-2);
-}
-
-.hidden { display: none !important; }
-
-@media (max-width: 900px) {
-  .chart-wrapper { grid-template-columns: 1fr; }
-  .budget-cards-grid,
-  .habits-grid { grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 800px) {
-  .dashboard-grid,
-  .form-grid,
-  .filters-grid,
-  .budget-form-grid,
-  .security-grid,
-  .budget-cards-grid,
-  .habits-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .field-full { grid-column: auto; }
-}
-
-@media (max-width: 560px) {
-  .app {
-    width: min(100% - 20px, 1100px);
-    margin-top: 20px;
-    margin-bottom: 28px;
-  }
-
-  .card,
-  .lock-card {
-    padding: 16px;
-  }
-
-  .app-header h1 { font-size: 1.6rem; }
-
-  .movimiento-top,
-  .category-top,
-  .history-header,
-  .legend-title-row,
-  .section-header,
-  .budget-progress-top,
-  .budget-summary-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .category-meta { text-align: left; }
-  .chart-canvas-box { min-height: auto; }
-}
-
-.side-menu {
-  position: fixed;
-  top: 0;
-  left: -280px;
-  width: 260px;
-  background: #fff;
-  height: 100vh;
-  transition: left 0.3s;
-  z-index: 1000;
-}
-
-.side-menu.active {
-  left: 0;
-}
-
-.menu-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  opacity: 0;
-  visibility: hidden;
-  transition: 0.3s;
-}
-
-.menu-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.menu-toggle {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 1100;
-  width: 46px;
-  height: 46px;
-  border: none;
-  border-radius: 12px;
-  background: #2563eb;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.menu-close {
-  border: none;
-  background: transparent;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.side-menu {
-  padding: 20px 16px;
-  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.15);
-}
-
-.side-menu-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.side-menu-header h2 {
-  margin: 0;
-}
-
-.side-menu-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.menu-link {
-  text-decoration: none;
-  color: #111827;
-  font-weight: 600;
-  padding: 10px 12px;
-  border-radius: 10px;
-}
-
-/* SECCIONES TIPO APP */
-.app-section {
-  display: none;
-}
-
-.app-section.active-section {
-  display: block;
-}
-
-/* BOTONES DEL MENÚ */
-.side-menu-nav .menu-link {
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  text-decoration: none;
-  color: #111827;
-  font-weight: 600;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 16px;
-}
-
-.side-menu-nav .menu-link:hover {
-  background: #eff6ff;
-}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finanzas Personales</title>
+
+  <link rel="icon" href="./icon-192.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- BOTÓN HAMBURGUESA -->
+  <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
+    ☰
+  </button>
+
+  <!-- FONDO OSCURO -->
+  <div id="menu-overlay" class="menu-overlay"></div>
+
+  <!-- MENÚ LATERAL -->
+  <aside id="side-menu" class="side-menu">
+    <div class="side-menu-header">
+      <h2>Menú</h2>
+    </div>
+
+    <nav class="side-menu-nav">
+      <button class="menu-link" data-section="registro">Registrar movimiento</button>
+      <button class="menu-link" data-section="dashboard">Dashboard</button>
+      <button class="menu-link" data-section="presupuesto">Presupuesto</button>
+      <button class="menu-link" data-section="perfil">Perfil</button>
+    </nav>
+  </aside>
+
+  <!-- PANTALLA DE BLOQUEO -->
+  <div id="lock-screen" class="lock-screen">
+    <div class="lock-card">
+      <h2 id="lock-title" class="lock-title">Desbloquear app</h2>
+      <p id="lock-description" class="lock-description">
+        Ingresa tu PIN para acceder a tus finanzas.
+      </p>
+
+      <form id="lock-form" novalidate>
+        <div id="lock-unlock-group" class="field">
+          <label for="lock-pin">PIN</label>
+          <input
+            id="lock-pin"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="1234"
+            autocomplete="off"
+          />
+        </div>
+
+        <div id="lock-setup-group" class="lock-setup-group hidden">
+          <div class="field">
+            <label for="lock-pin-new">Nuevo PIN</label>
+            <input
+              id="lock-pin-new"
+              type="password"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="1234"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="field">
+            <label for="lock-pin-confirm">Confirmar PIN</label>
+            <input
+              id="lock-pin-confirm"
+              type="password"
+              inputmode="numeric"
+              maxlength="4"
+              placeholder="1234"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="lock-actions">
+          <button id="lock-submit" type="submit" class="btn btn-primary">
+            Ingresar
+          </button>
+        </div>
+
+        <p id="lock-message" class="mensaje"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app-container" class="hidden">
+    <div class="app">
+      <header class="app-header">
+        <h1>Finanzas Personales</h1>
+        <p class="subtitle">Controla tus ingresos y gastos desde una PWA ligera</p>
+      </header>
+
+      <main class="main-grid">
+        <!-- REGISTRO -->
+        <section id="registro" class="app-section card">
+          <h2 class="section-title">Registrar movimiento</h2>
+
+          <form id="form-movimiento" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label for="tipo">Tipo</label>
+                <select id="tipo" required>
+                  <option value="">Selecciona</option>
+                  <option value="ingreso">Ingreso</option>
+                  <option value="gasto">Gasto</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="categoria">Categoría</label>
+                <input
+                  id="categoria"
+                  type="text"
+                  placeholder="Ej: Comida, Transporte, Sueldo"
+                  maxlength="40"
+                  required
+                />
+              </div>
+
+              <div class="field field-full">
+                <label for="descripcion">Descripción</label>
+                <input
+                  id="descripcion"
+                  type="text"
+                  placeholder="Ej: Compra de mercado"
+                  maxlength="80"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label for="monto">Monto</label>
+                <input
+                  id="monto"
+                  type="number"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0.01"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label for="fecha">Fecha</label>
+                <input id="fecha" type="date" required />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="btn-submit" class="btn btn-primary">
+                Guardar movimiento
+              </button>
+              <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary hidden">
+                Cancelar edición
+              </button>
+            </div>
+
+            <p id="mensaje" class="mensaje"></p>
+          </form>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Saldo acumulado</h2>
+                <p class="section-note">Una sola línea: sube con ingresos, baja con gastos y se mantiene cuando no hay cambios</p>
+              </div>
+            </div>
+
+            <div id="balance-chart-empty-state" class="empty-state hidden">
+              Aún no hay movimientos suficientes para mostrar la línea de saldo acumulado.
+            </div>
+
+            <div id="balance-chart-wrapper" class="balance-chart-wrapper">
+              <div class="balance-chart-info">
+                <div class="mini-legend-item">
+                  <span class="mini-legend-color mini-legend-balance"></span>
+                  <span>Línea de saldo</span>
+                </div>
+                <div class="mini-legend-item">
+                  <span class="mini-legend-color mini-legend-drop"></span>
+                  <span>Tramo de bajada por gasto</span>
+                </div>
+              </div>
+
+              <div class="line-canvas-box">
+                <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="inner-section card history-card">
+            <div class="history-header">
+              <h2 class="section-title">Historial</h2>
+              <span id="contador-movimientos" class="history-count">0 movimientos</span>
+            </div>
+
+            <div id="history-list" class="history-list"></div>
+          </div>
+        </section>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="app-section card">
+          <h2 class="section-title">Dashboard</h2>
+
+          <div class="dashboard-grid">
+            <article class="stat-card stat-income">
+              <span class="stat-label">Ingresos</span>
+              <strong id="total-ingresos">S/ 0.00</strong>
+            </article>
+
+            <article class="stat-card stat-expense">
+              <span class="stat-label">Gastos</span>
+              <strong id="total-gastos">S/ 0.00</strong>
+            </article>
+
+            <article class="stat-card stat-balance">
+              <span class="stat-label">Balance</span>
+              <strong id="balance-total">S/ 0.00</strong>
+            </article>
+          </div>
+
+          <div class="inner-section card">
+            <h2 class="section-title">Filtros</h2>
+
+            <div class="filters-grid">
+              <div class="field">
+                <label for="filtro-tipo">Filtrar por tipo</label>
+                <select id="filtro-tipo">
+                  <option value="todos">Todos</option>
+                  <option value="ingreso">Ingresos</option>
+                  <option value="gasto">Gastos</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="filtro-mes">Filtrar por mes</label>
+                <input id="filtro-mes" type="month" />
+              </div>
+
+              <div class="field filter-action">
+                <label class="label-invisible">Acción</label>
+                <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">
+                  Limpiar filtros
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Análisis de hábitos</h2>
+                <p class="section-note">Interpretación automática según los movimientos visibles con los filtros actuales</p>
+              </div>
+            </div>
+
+            <div id="habitos-empty-state" class="empty-state hidden">
+              No hay suficientes movimientos para generar análisis con los filtros actuales.
+            </div>
+
+            <div id="habitos-grid" class="habits-grid">
+              <article class="habit-card">
+                <span class="habit-label">Mayor categoría de gasto</span>
+                <strong id="habit-top-category">—</strong>
+                <p id="habit-top-category-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Promedio por gasto</span>
+                <strong id="habit-average-expense">—</strong>
+                <p id="habit-average-expense-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Día con más gasto</span>
+                <strong id="habit-top-day">—</strong>
+                <p id="habit-top-day-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Conteo de movimientos</span>
+                <strong id="habit-movement-count">—</strong>
+                <p id="habit-movement-count-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Gasto más repetido</span>
+                <strong id="habit-most-repeated-expense">—</strong>
+                <p id="habit-most-repeated-expense-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Dónde gastas más</span>
+                <strong id="habit-week-pattern">—</strong>
+                <p id="habit-week-pattern-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Racha de días con gasto</span>
+                <strong id="habit-expense-streak">—</strong>
+                <p id="habit-expense-streak-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Categoría que más creció</span>
+                <strong id="habit-growing-category">—</strong>
+                <p id="habit-growing-category-detail" class="habit-detail">Sin datos</p>
+              </article>
+            </div>
+
+            <div class="insights-box">
+              <h3 class="insights-title">Conclusiones rápidas</h3>
+              <div id="habitos-insights" class="insights-list"></div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <h2 class="section-title">Gráfico de gastos por categoría</h2>
+
+            <div id="chart-empty-state" class="empty-state hidden">
+              No hay gastos para mostrar en el gráfico con los filtros actuales.
+            </div>
+
+            <div id="chart-wrapper" class="chart-wrapper">
+              <div class="chart-canvas-box">
+                <canvas id="grafico-categorias" width="320" height="320"></canvas>
+              </div>
+
+              <div id="chart-legend" class="chart-legend"></div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <h2 class="section-title">Gastos por categoría</h2>
+            <div id="categorias-resumen" class="categories-list"></div>
+          </div>
+        </section>
+
+        <!-- PRESUPUESTO -->
+        <section id="presupuesto" class="app-section card">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Presupuesto mensual</h2>
+              <p class="section-note">Define cuánto quieres gastar en un mes y compáralo con tus gastos reales</p>
+            </div>
+          </div>
+
+          <form id="form-presupuesto" novalidate>
+            <div class="budget-form-grid">
+              <div class="field">
+                <label for="presupuesto-mes">Mes del presupuesto</label>
+                <input id="presupuesto-mes" type="month" required />
+              </div>
+
+              <div class="field">
+                <label for="presupuesto-monto">Monto del presupuesto</label>
+                <input id="presupuesto-monto" type="number" placeholder="0.00" step="0.01" min="0.01" required />
+              </div>
+
+              <div class="field budget-action">
+                <label class="label-invisible">Acción</label>
+                <button type="submit" class="btn btn-primary">Guardar presupuesto</button>
+              </div>
+            </div>
+
+            <p id="mensaje-presupuesto" class="mensaje"></p>
+          </form>
+
+          <div class="budget-summary-header">
+            <h3 id="budget-title" class="budget-title">Resumen del presupuesto</h3>
+            <button id="btn-eliminar-presupuesto" type="button" class="btn btn-delete hidden">
+              Eliminar presupuesto del mes
+            </button>
+          </div>
+
+          <div class="budget-cards-grid">
+            <article class="budget-card">
+              <span class="stat-label">Presupuesto</span>
+              <strong id="budget-total">S/ 0.00</strong>
+            </article>
+
+            <article class="budget-card">
+              <span class="stat-label">Gastado</span>
+              <strong id="budget-spent">S/ 0.00</strong>
+            </article>
+
+            <article class="budget-card">
+              <span class="stat-label">Disponible</span>
+              <strong id="budget-remaining">S/ 0.00</strong>
+            </article>
+
+            <article class="budget-card">
+              <span class="stat-label">% usado</span>
+              <strong id="budget-percent">0%</strong>
+            </article>
+          </div>
+
+          <div class="budget-progress-wrap">
+            <div class="budget-progress-top">
+              <span id="budget-status-label" class="budget-status-label">Sin presupuesto configurado</span>
+              <span id="budget-progress-text" class="budget-progress-text">0%</span>
+            </div>
+
+            <div class="budget-progress-track">
+              <div id="budget-progress-fill" class="budget-progress-fill"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PERFIL -->
+        <section id="perfil" class="app-section card">
+          <h2 class="section-title">Perfil</h2>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Seguridad</h2>
+                <p class="section-note">
+                  Protege esta app con un PIN local guardado en tu navegador
+                </p>
+              </div>
+            </div>
+
+            <div class="security-status-box">
+              <span class="stat-label">Estado del PIN</span>
+              <strong id="security-status-text">Sin configurar</strong>
+            </div>
+
+            <form id="security-form" novalidate>
+              <div class="security-grid">
+                <div id="security-current-group" class="field">
+                  <label for="security-current-pin">PIN actual</label>
+                  <input
+                    id="security-current-pin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="1234"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="security-new-pin">Nuevo PIN</label>
+                  <input
+                    id="security-new-pin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="1234"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="security-confirm-pin">Confirmar nuevo PIN</label>
+                  <input
+                    id="security-confirm-pin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="1234"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div class="security-actions">
+                <button id="btn-save-pin" type="submit" class="btn btn-primary">
+                  Configurar PIN
+                </button>
+                <button id="btn-delete-pin" type="button" class="btn btn-delete hidden">
+                  Eliminar PIN
+                </button>
+                <button id="btn-lock-now" type="button" class="btn btn-secondary hidden">
+                  Bloquear ahora
+                </button>
+              </div>
+
+              <p id="security-message" class="mensaje"></p>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

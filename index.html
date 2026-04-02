@@ -1,8 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-  
-<!-- PRUEBA MANIFEST -->
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,33 +7,32 @@
 
   <link rel="icon" href="./icon-192.png" />
   <link rel="manifest" href="./manifest.json" />
-
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <!-- BOTÓN HAMBURGUESA -->
-<button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
-  ☰
-</button>
+  <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
+    ☰
+  </button>
 
-<!-- FONDO OSCURO -->
-<div id="menu-overlay" class="menu-overlay"></div>
+  <!-- FONDO OSCURO -->
+  <div id="menu-overlay" class="menu-overlay"></div>
 
-<!-- MENÚ LATERAL -->
-<aside id="side-menu" class="side-menu">
-  <div class="side-menu-header">
-    <h2>Menú</h2>
-  </div>
+  <!-- MENÚ LATERAL -->
+  <aside id="side-menu" class="side-menu">
+    <div class="side-menu-header">
+      <h2>Menú</h2>
+    </div>
 
-  <nav class="side-menu-nav">
-  <button class="menu-link" data-section="registro">Registrar movimiento</button>
-  <button class="menu-link" data-section="dashboard">Dashboard</button>
-  <button class="menu-link" data-section="historial">Historial</button>
-  <button class="menu-link" data-section="presupuesto">Presupuesto</button>
-  <button class="menu-link" data-section="analisis">Análisis</button>
-</nav>
-</aside>
+    <nav class="side-menu-nav">
+      <button class="menu-link" data-section="registro">Registrar movimiento</button>
+      <button class="menu-link" data-section="dashboard">Dashboard</button>
+      <button class="menu-link" data-section="presupuesto">Presupuesto</button>
+      <button class="menu-link" data-section="perfil">Perfil</button>
+    </nav>
+  </aside>
+
   <!-- PANTALLA DE BLOQUEO -->
   <div id="lock-screen" class="lock-screen">
     <div class="lock-card">
@@ -104,7 +100,7 @@
       </header>
 
       <main class="main-grid">
-        <!-- FORMULARIO -->
+        <!-- REGISTRO -->
         <section id="registro" class="app-section card">
           <h2 class="section-title">Registrar movimiento</h2>
 
@@ -170,6 +166,45 @@
 
             <p id="mensaje" class="mensaje"></p>
           </form>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Saldo acumulado</h2>
+                <p class="section-note">Una sola línea: sube con ingresos, baja con gastos y se mantiene cuando no hay cambios</p>
+              </div>
+            </div>
+
+            <div id="balance-chart-empty-state" class="empty-state hidden">
+              Aún no hay movimientos suficientes para mostrar la línea de saldo acumulado.
+            </div>
+
+            <div id="balance-chart-wrapper" class="balance-chart-wrapper">
+              <div class="balance-chart-info">
+                <div class="mini-legend-item">
+                  <span class="mini-legend-color mini-legend-balance"></span>
+                  <span>Línea de saldo</span>
+                </div>
+                <div class="mini-legend-item">
+                  <span class="mini-legend-color mini-legend-drop"></span>
+                  <span>Tramo de bajada por gasto</span>
+                </div>
+              </div>
+
+              <div class="line-canvas-box">
+                <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="inner-section card history-card">
+            <div class="history-header">
+              <h2 class="section-title">Historial</h2>
+              <span id="contador-movimientos" class="history-count">0 movimientos</span>
+            </div>
+
+            <div id="history-list" class="history-list"></div>
+          </div>
         </section>
 
         <!-- DASHBOARD -->
@@ -192,105 +227,122 @@
               <strong id="balance-total">S/ 0.00</strong>
             </article>
           </div>
-        </section>
 
-        <!-- FILTROS -->
-        <section class="card">
-          <h2 class="section-title">Filtros</h2>
+          <div class="inner-section card">
+            <h2 class="section-title">Filtros</h2>
 
-          <div class="filters-grid">
-            <div class="field">
-              <label for="filtro-tipo">Filtrar por tipo</label>
-              <select id="filtro-tipo">
-                <option value="todos">Todos</option>
-                <option value="ingreso">Ingresos</option>
-                <option value="gasto">Gastos</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="filtro-mes">Filtrar por mes</label>
-              <input id="filtro-mes" type="month" />
-            </div>
-
-            <div class="field filter-action">
-              <label class="label-invisible">Acción</label>
-              <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">
-                Limpiar filtros
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- SEGURIDAD -->
-        <section class="card">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Seguridad</h2>
-              <p class="section-note">
-                Protege esta app con un PIN local guardado en tu navegador
-              </p>
-            </div>
-          </div>
-
-          <div class="security-status-box">
-            <span class="stat-label">Estado del PIN</span>
-            <strong id="security-status-text">Sin configurar</strong>
-          </div>
-
-          <form id="security-form" novalidate>
-            <div class="security-grid">
-              <div id="security-current-group" class="field">
-                <label for="security-current-pin">PIN actual</label>
-                <input
-                  id="security-current-pin"
-                  type="password"
-                  inputmode="numeric"
-                  maxlength="4"
-                  placeholder="1234"
-                  autocomplete="off"
-                />
+            <div class="filters-grid">
+              <div class="field">
+                <label for="filtro-tipo">Filtrar por tipo</label>
+                <select id="filtro-tipo">
+                  <option value="todos">Todos</option>
+                  <option value="ingreso">Ingresos</option>
+                  <option value="gasto">Gastos</option>
+                </select>
               </div>
 
               <div class="field">
-                <label for="security-new-pin">Nuevo PIN</label>
-                <input
-                  id="security-new-pin"
-                  type="password"
-                  inputmode="numeric"
-                  maxlength="4"
-                  placeholder="1234"
-                  autocomplete="off"
-                />
+                <label for="filtro-mes">Filtrar por mes</label>
+                <input id="filtro-mes" type="month" />
               </div>
 
-              <div class="field">
-                <label for="security-confirm-pin">Confirmar nuevo PIN</label>
-                <input
-                  id="security-confirm-pin"
-                  type="password"
-                  inputmode="numeric"
-                  maxlength="4"
-                  placeholder="1234"
-                  autocomplete="off"
-                />
+              <div class="field filter-action">
+                <label class="label-invisible">Acción</label>
+                <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">
+                  Limpiar filtros
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Análisis de hábitos</h2>
+                <p class="section-note">Interpretación automática según los movimientos visibles con los filtros actuales</p>
               </div>
             </div>
 
-            <div class="security-actions">
-              <button id="btn-save-pin" type="submit" class="btn btn-primary">
-                Configurar PIN
-              </button>
-              <button id="btn-delete-pin" type="button" class="btn btn-delete hidden">
-                Eliminar PIN
-              </button>
-              <button id="btn-lock-now" type="button" class="btn btn-secondary hidden">
-                Bloquear ahora
-              </button>
+            <div id="habitos-empty-state" class="empty-state hidden">
+              No hay suficientes movimientos para generar análisis con los filtros actuales.
             </div>
 
-            <p id="security-message" class="mensaje"></p>
-          </form>
+            <div id="habitos-grid" class="habits-grid">
+              <article class="habit-card">
+                <span class="habit-label">Mayor categoría de gasto</span>
+                <strong id="habit-top-category">—</strong>
+                <p id="habit-top-category-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Promedio por gasto</span>
+                <strong id="habit-average-expense">—</strong>
+                <p id="habit-average-expense-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Día con más gasto</span>
+                <strong id="habit-top-day">—</strong>
+                <p id="habit-top-day-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Conteo de movimientos</span>
+                <strong id="habit-movement-count">—</strong>
+                <p id="habit-movement-count-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Gasto más repetido</span>
+                <strong id="habit-most-repeated-expense">—</strong>
+                <p id="habit-most-repeated-expense-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Dónde gastas más</span>
+                <strong id="habit-week-pattern">—</strong>
+                <p id="habit-week-pattern-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Racha de días con gasto</span>
+                <strong id="habit-expense-streak">—</strong>
+                <p id="habit-expense-streak-detail" class="habit-detail">Sin datos</p>
+              </article>
+
+              <article class="habit-card">
+                <span class="habit-label">Categoría que más creció</span>
+                <strong id="habit-growing-category">—</strong>
+                <p id="habit-growing-category-detail" class="habit-detail">Sin datos</p>
+              </article>
+            </div>
+
+            <div class="insights-box">
+              <h3 class="insights-title">Conclusiones rápidas</h3>
+              <div id="habitos-insights" class="insights-list"></div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <h2 class="section-title">Gráfico de gastos por categoría</h2>
+
+            <div id="chart-empty-state" class="empty-state hidden">
+              No hay gastos para mostrar en el gráfico con los filtros actuales.
+            </div>
+
+            <div id="chart-wrapper" class="chart-wrapper">
+              <div class="chart-canvas-box">
+                <canvas id="grafico-categorias" width="320" height="320"></canvas>
+              </div>
+
+              <div id="chart-legend" class="chart-legend"></div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <h2 class="section-title">Gastos por categoría</h2>
+            <div id="categorias-resumen" class="categories-list"></div>
+          </div>
         </section>
 
         <!-- PRESUPUESTO -->
@@ -364,144 +416,80 @@
           </div>
         </section>
 
-        <!-- HÁBITOS -->
-        <section class="card">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Análisis de hábitos</h2>
-              <p class="section-note">Interpretación automática según los movimientos visibles con los filtros actuales</p>
-            </div>
-          </div>
+        <!-- PERFIL -->
+        <section id="perfil" class="app-section card">
+          <h2 class="section-title">Perfil</h2>
 
-          <div id="habitos-empty-state" class="empty-state hidden">
-            No hay suficientes movimientos para generar análisis con los filtros actuales.
-          </div>
-
-          <div id="habitos-grid" class="habits-grid">
-            <article class="habit-card">
-              <span class="habit-label">Mayor categoría de gasto</span>
-              <strong id="habit-top-category">—</strong>
-              <p id="habit-top-category-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Promedio por gasto</span>
-              <strong id="habit-average-expense">—</strong>
-              <p id="habit-average-expense-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Día con más gasto</span>
-              <strong id="habit-top-day">—</strong>
-              <p id="habit-top-day-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Conteo de movimientos</span>
-              <strong id="habit-movement-count">—</strong>
-              <p id="habit-movement-count-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Gasto más repetido</span>
-              <strong id="habit-most-repeated-expense">—</strong>
-              <p id="habit-most-repeated-expense-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Dónde gastas más</span>
-              <strong id="habit-week-pattern">—</strong>
-              <p id="habit-week-pattern-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Racha de días con gasto</span>
-              <strong id="habit-expense-streak">—</strong>
-              <p id="habit-expense-streak-detail" class="habit-detail">Sin datos</p>
-            </article>
-
-            <article class="habit-card">
-              <span class="habit-label">Categoría que más creció</span>
-              <strong id="habit-growing-category">—</strong>
-              <p id="habit-growing-category-detail" class="habit-detail">Sin datos</p>
-            </article>
-          </div>
-
-          <div class="insights-box">
-            <h3 class="insights-title">Conclusiones rápidas</h3>
-            <div id="habitos-insights" class="insights-list"></div>
-          </div>
-        </section>
-
-        <!-- SALDO -->
-        <section class="card">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Saldo acumulado</h2>
-              <p class="section-note">Una sola línea: sube con ingresos, baja con gastos y se mantiene cuando no hay cambios</p>
-            </div>
-          </div>
-
-          <div id="balance-chart-empty-state" class="empty-state hidden">
-            Aún no hay movimientos suficientes para mostrar la línea de saldo acumulado.
-          </div>
-
-          <div id="balance-chart-wrapper" class="balance-chart-wrapper">
-            <div class="balance-chart-info">
-              <div class="mini-legend-item">
-                <span class="mini-legend-color mini-legend-balance"></span>
-                <span>Línea de saldo</span>
-              </div>
-              <div class="mini-legend-item">
-                <span class="mini-legend-color mini-legend-drop"></span>
-                <span>Tramo de bajada por gasto</span>
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Seguridad</h2>
+                <p class="section-note">
+                  Protege esta app con un PIN local guardado en tu navegador
+                </p>
               </div>
             </div>
 
-            <div class="line-canvas-box">
-              <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
-            </div>
-          </div>
-        </section>
-
-        <!-- CIRCULAR -->
-        <section class="card">
-          <h2 class="section-title">Gráfico de gastos por categoría</h2>
-
-          <div id="chart-empty-state" class="empty-state hidden">
-            No hay gastos para mostrar en el gráfico con los filtros actuales.
-          </div>
-
-          <div id="chart-wrapper" class="chart-wrapper">
-            <div class="chart-canvas-box">
-              <canvas id="grafico-categorias" width="320" height="320"></canvas>
+            <div class="security-status-box">
+              <span class="stat-label">Estado del PIN</span>
+              <strong id="security-status-text">Sin configurar</strong>
             </div>
 
-            <div id="chart-legend" class="chart-legend"></div>
+            <form id="security-form" novalidate>
+              <div class="security-grid">
+                <div id="security-current-group" class="field">
+                  <label for="security-current-pin">PIN actual</label>
+                  <input
+                    id="security-current-pin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="1234"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="security-new-pin">Nuevo PIN</label>
+                  <input
+                    id="security-new-pin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="1234"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="security-confirm-pin">Confirmar nuevo PIN</label>
+                  <input
+                    id="security-confirm-pin"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="1234"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <div class="security-actions">
+                <button id="btn-save-pin" type="submit" class="btn btn-primary">
+                  Configurar PIN
+                </button>
+                <button id="btn-delete-pin" type="button" class="btn btn-delete hidden">
+                  Eliminar PIN
+                </button>
+                <button id="btn-lock-now" type="button" class="btn btn-secondary hidden">
+                  Bloquear ahora
+                </button>
+              </div>
+
+              <p id="security-message" class="mensaje"></p>
+            </form>
           </div>
         </section>
-
-        <!-- CATEGORÍAS -->
-        <section class="card">
-          <h2 class="section-title">Gastos por categoría</h2>
-          <div id="categorias-resumen" class="categories-list"></div>
-        </section>
-
-        <!-- HISTORIAL -->
-        <section id="historial" class="app-section card history-card">
-          <div class="history-header">
-            <h2 class="section-title">Historial</h2>
-            <span id="contador-movimientos" class="history-count">0 movimientos</span>
-          </div>
-
-          <div class="history-list"></div>
-        </section>
-
-        <section id="analisis" class="app-section card">
-  <h2 class="section-title">Análisis</h2>
-  <p class="section-note">Aquí irá el análisis detallado de tus finanzas.</p>
-</section>
-
       </main>
     </div>
   </div>

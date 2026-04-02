@@ -92,8 +92,8 @@ const habitGrowingCategoryDetail = document.getElementById("habit-growing-catego
 const habitosInsights = document.getElementById("habitos-insights");
 
 // HISTORIAL
-const historialEl = document.getElementById("historial");
 const contadorMovimientosEl = document.getElementById("contador-movimientos");
+const historyListEl = document.getElementById("history-list");
 
 // CATEGORÍAS
 const categoriasResumenEl = document.getElementById("categorias-resumen");
@@ -111,6 +111,13 @@ const ctxBalance = canvasBalance.getContext("2d");
 const balanceChartWrapper = document.getElementById("balance-chart-wrapper");
 const balanceChartEmptyState = document.getElementById("balance-chart-empty-state");
 
+// MENÚ
+const menuToggle = document.getElementById("menu-toggle");
+const sideMenu = document.getElementById("side-menu");
+const menuOverlay = document.getElementById("menu-overlay");
+const menuLinks = document.querySelectorAll(".menu-link");
+const appSections = document.querySelectorAll(".app-section");
+
 const COLORES_GRAFICO = [
   "#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2",
   "#ea580c", "#4f46e5", "#65a30d", "#db2777", "#0f766e", "#9333ea"
@@ -124,6 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
   inicializarMesPresupuesto();
   configurarSeguridadUI();
   iniciarSistemaPIN();
+  mostrarSeccion("registro");
 });
 
 lockForm.addEventListener("submit", manejarLockForm);
@@ -153,6 +161,52 @@ btnLimpiarFiltros.addEventListener("click", () => {
   sincronizarMesPresupuestoConFiltro();
   renderApp();
   mostrarMensaje("Filtros limpiados correctamente.", "success");
+});
+
+// ===== MENÚ HAMBURGUESA (MODO APP) =====
+function abrirMenu() {
+  sideMenu.classList.add("active");
+  menuOverlay.classList.add("active");
+}
+
+function cerrarMenu() {
+  sideMenu.classList.remove("active");
+  menuOverlay.classList.remove("active");
+}
+
+function alternarMenu() {
+  if (sideMenu.classList.contains("active")) {
+    cerrarMenu();
+  } else {
+    abrirMenu();
+  }
+}
+
+function mostrarSeccion(sectionId) {
+  appSections.forEach((section) => {
+    section.classList.remove("active-section");
+  });
+
+  const seccionActiva = document.getElementById(sectionId);
+  if (seccionActiva) {
+    seccionActiva.classList.add("active-section");
+  }
+}
+
+if (menuToggle) {
+  menuToggle.addEventListener("click", alternarMenu);
+}
+
+if (menuOverlay) {
+  menuOverlay.addEventListener("click", cerrarMenu);
+}
+
+menuLinks.forEach((link) => {
+  link.addEventListener("click", () => {
+    const sectionId = link.dataset.section;
+    mostrarSeccion(sectionId);
+    cerrarMenu();
+  });
 });
 
 // PIN
@@ -395,7 +449,7 @@ function renderApp() {
   renderDashboard(movimientosFiltrados);
   renderPresupuestoMensual();
   renderHabitos(movimientosFiltrados);
-  renderGraficoSaldoAcumulado();
+  renderGraficoSaldoAcumulado(movimientosFiltrados);
   renderGraficoCategorias(movimientosFiltrados);
   renderResumenCategorias(movimientosFiltrados);
   renderHistorial(movimientosFiltrados);
@@ -861,9 +915,9 @@ function obtenerMesAnterior(mesISO) {
 }
 
 // SALDO ACUMULADO
-function renderGraficoSaldoAcumulado() {
+function renderGraficoSaldoAcumulado(lista) {
   limpiarCanvasBalance();
-  const datos = obtenerDatosSaldoAcumulado();
+  const datos = obtenerDatosSaldoAcumulado(lista);
 
   if (datos.length < 2) {
     balanceChartWrapper.classList.add("hidden");
@@ -876,8 +930,8 @@ function renderGraficoSaldoAcumulado() {
   dibujarGraficoSaldoAcumulado(datos);
 }
 
-function obtenerDatosSaldoAcumulado() {
-  const movimientosOrdenados = [...movimientos].sort((a, b) => {
+function obtenerDatosSaldoAcumulado(lista) {
+  const movimientosOrdenados = [...lista].sort((a, b) => {
     const fechaA = new Date(`${a.fechaISO}T00:00:00`).getTime();
     const fechaB = new Date(`${b.fechaISO}T00:00:00`).getTime();
     if (fechaA !== fechaB) return fechaA - fechaB;
@@ -1172,11 +1226,11 @@ function renderHistorial(lista) {
   contadorMovimientosEl.textContent = lista.length === 1 ? "1 movimiento" : `${lista.length} movimientos`;
 
   if (lista.length === 0) {
-    historialEl.innerHTML = `<div class="empty-state">No hay movimientos para mostrar con los filtros actuales.</div>`;
+    historyListEl.innerHTML = `<div class="empty-state">No hay movimientos para mostrar con los filtros actuales.</div>`;
     return;
   }
 
-  historialEl.innerHTML = lista.map((mov) => {
+  historyListEl.innerHTML = lista.map((mov) => {
     const claseBadge = mov.tipo === "ingreso" ? "badge-ingreso" : "badge-gasto";
     const claseMonto = mov.tipo === "ingreso" ? "monto-ingreso" : "monto-gasto";
     const signo = mov.tipo === "ingreso" ? "+" : "-";
@@ -1222,6 +1276,7 @@ function editarMovimiento(id) {
   btnCancelarEdicion.classList.remove("hidden");
 
   mostrarMensaje("Estás editando un movimiento.", "success");
+  mostrarSeccion("registro");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1359,70 +1414,3 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./service-worker.js");
   });
 }
-
-// ===== MENÚ HAMBURGUESA (MODO APP) =====
-
-const menuToggle = document.getElementById("menu-toggle");
-const sideMenu = document.getElementById("side-menu");
-const menuClose = document.getElementById("menu-close");
-const menuOverlay = document.getElementById("menu-overlay");
-
-const menuLinks = document.querySelectorAll(".menu-link");
-const appSections = document.querySelectorAll(".app-section");
-
-// abrir
-function abrirMenu() {
-  sideMenu.classList.add("active");
-  menuOverlay.classList.add("active");
-}
-
-// cerrar
-function cerrarMenu() {
-  sideMenu.classList.remove("active");
-  menuOverlay.classList.remove("active");
-}
-
-// alternar (abrir/cerrar con el mismo botón)
-function alternarMenu() {
-  if (sideMenu.classList.contains("active")) {
-    cerrarMenu();
-  } else {
-    abrirMenu();
-  }
-}
-
-// cambiar de sección (tipo app)
-function mostrarSeccion(sectionId) {
-  appSections.forEach(section => {
-    section.classList.remove("active-section");
-  });
-
-  const seccionActiva = document.getElementById(sectionId);
-  if (seccionActiva) {
-    seccionActiva.classList.add("active-section");
-  }
-}
-
-// eventos
-if (menuToggle) {
-  menuToggle.addEventListener("click", alternarMenu);
-}
-
-if (menuClose) {
-  menuClose.addEventListener("click", cerrarMenu);
-}
-
-if (menuOverlay) {
-  menuOverlay.addEventListener("click", cerrarMenu);
-}
-
-menuLinks.forEach(link => {
-  link.addEventListener("click", () => {
-    const sectionId = link.dataset.section;
-    mostrarSeccion(sectionId);
-    cerrarMenu();
-  });
-});
-
-// sección inicial
-mostrarSeccion("registro");
