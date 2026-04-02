@@ -1359,3 +1359,28 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./service-worker.js");
   });
 }
+
+// ===== MENÚ HAMBURGUESA =====
+const menuToggle = document.getElementById("menu-toggle");
+const sideMenu = document.getElementById("side-menu");
+const menuClose = document.getElementById("menu-close");
+const menuOverlay = document.getElementById("menu-overlay");
+
+function abrirMenu() {
+  sideMenu.classList.add("active");
+  menuOverlay.classList.add("active");
+}
+
+function cerrarMenu() {
+  sideMenu.classList.remove("active");
+  menuOverlay.classList.remove("active");
+}
+
+// abrir
+menuToggle.addEventListener("click", abrirMenu);
+
+// cerrar con botón X
+menuClose.addEventListener("click", cerrarMenu);
+
+// cerrar tocando fondo oscuro
+menuOverlay.addEventListener("click", cerrarMenu);
