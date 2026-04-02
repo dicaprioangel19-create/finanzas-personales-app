@@ -27,7 +27,6 @@
 <aside id="side-menu" class="side-menu">
   <div class="side-menu-header">
     <h2>Menú</h2>
-    <button id="menu-close" class="menu-close" aria-label="Cerrar menú">✕</button>
   </div>
 
   <nav class="side-menu-nav">
@@ -106,7 +105,7 @@
 
       <main class="main-grid">
         <!-- FORMULARIO -->
-        <section class="card">
+        <section id="registro" class="card">
           <h2 class="section-title">Registrar movimiento</h2>
 
           <form id="form-movimiento" novalidate>
@@ -174,7 +173,7 @@
         </section>
 
         <!-- DASHBOARD -->
-        <section class="card">
+        <section id="dashboard" class="card">
           <h2 class="section-title">Dashboard</h2>
 
           <div class="dashboard-grid">
@@ -295,7 +294,7 @@
         </section>
 
         <!-- PRESUPUESTO -->
-        <section class="card">
+        <section id="presupuesto" class="card">
           <div class="section-header">
             <div>
               <h2 class="section-title">Presupuesto mensual</h2>
@@ -489,14 +488,20 @@
         </section>
 
         <!-- HISTORIAL -->
-        <section class="card history-card">
+        <section id="historial" class="card history-card">
           <div class="history-header">
             <h2 class="section-title">Historial</h2>
             <span id="contador-movimientos" class="history-count">0 movimientos</span>
           </div>
 
-          <div id="historial" class="history-list"></div>
+          <div class="history-list"></div>
         </section>
+
+        <section id="analisis" class="card">
+  <h2 class="section-title">Análisis</h2>
+  <p class="section-note">Aquí irá el análisis detallado de tus finanzas.</p>
+</section>
+
       </main>
     </div>
   </div>
