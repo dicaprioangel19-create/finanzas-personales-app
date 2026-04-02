@@ -784,6 +784,30 @@ select:focus {
   border-radius: 10px;
 }
 
-.menu-link:hover {
+/* SECCIONES TIPO APP */
+.app-section {
+  display: none;
+}
+
+.app-section.active-section {
+  display: block;
+}
+
+/* BOTONES DEL MENÚ */
+.side-menu-nav .menu-link {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  color: #111827;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.side-menu-nav .menu-link:hover {
   background: #eff6ff;
 }

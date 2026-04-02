@@ -1360,27 +1360,69 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// ===== MENÚ HAMBURGUESA =====
+// ===== MENÚ HAMBURGUESA (MODO APP) =====
+
 const menuToggle = document.getElementById("menu-toggle");
 const sideMenu = document.getElementById("side-menu");
 const menuClose = document.getElementById("menu-close");
 const menuOverlay = document.getElementById("menu-overlay");
 
+const menuLinks = document.querySelectorAll(".menu-link");
+const appSections = document.querySelectorAll(".app-section");
+
+// abrir
 function abrirMenu() {
   sideMenu.classList.add("active");
   menuOverlay.classList.add("active");
 }
 
+// cerrar
 function cerrarMenu() {
   sideMenu.classList.remove("active");
   menuOverlay.classList.remove("active");
 }
 
-// abrir
-menuToggle.addEventListener("click", abrirMenu);
+// alternar (abrir/cerrar con el mismo botón)
+function alternarMenu() {
+  if (sideMenu.classList.contains("active")) {
+    cerrarMenu();
+  } else {
+    abrirMenu();
+  }
+}
 
-// cerrar con botón X
-menuClose.addEventListener("click", cerrarMenu);
+// cambiar de sección (tipo app)
+function mostrarSeccion(sectionId) {
+  appSections.forEach(section => {
+    section.classList.remove("active-section");
+  });
 
-// cerrar tocando fondo oscuro
-menuOverlay.addEventListener("click", cerrarMenu);
+  const seccionActiva = document.getElementById(sectionId);
+  if (seccionActiva) {
+    seccionActiva.classList.add("active-section");
+  }
+}
+
+// eventos
+if (menuToggle) {
+  menuToggle.addEventListener("click", alternarMenu);
+}
+
+if (menuClose) {
+  menuClose.addEventListener("click", cerrarMenu);
+}
+
+if (menuOverlay) {
+  menuOverlay.addEventListener("click", cerrarMenu);
+}
+
+menuLinks.forEach(link => {
+  link.addEventListener("click", () => {
+    const sectionId = link.dataset.section;
+    mostrarSeccion(sectionId);
+    cerrarMenu();
+  });
+});
+
+// sección inicial
+mostrarSeccion("registro");

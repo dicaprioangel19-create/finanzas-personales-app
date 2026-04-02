@@ -30,12 +30,12 @@
   </div>
 
   <nav class="side-menu-nav">
-    <a href="#registro" class="menu-link">Registrar movimiento</a>
-    <a href="#dashboard" class="menu-link">Dashboard</a>
-    <a href="#historial" class="menu-link">Historial</a>
-    <a href="#presupuesto" class="menu-link">Presupuesto</a>
-    <a href="#analisis" class="menu-link">Análisis</a>
-  </nav>
+  <button class="menu-link" data-section="registro">Registrar movimiento</button>
+  <button class="menu-link" data-section="dashboard">Dashboard</button>
+  <button class="menu-link" data-section="historial">Historial</button>
+  <button class="menu-link" data-section="presupuesto">Presupuesto</button>
+  <button class="menu-link" data-section="analisis">Análisis</button>
+</nav>
 </aside>
   <!-- PANTALLA DE BLOQUEO -->
   <div id="lock-screen" class="lock-screen">
@@ -105,7 +105,7 @@
 
       <main class="main-grid">
         <!-- FORMULARIO -->
-        <section id="registro" class="card">
+        <section id="registro" class="app-section card">
           <h2 class="section-title">Registrar movimiento</h2>
 
           <form id="form-movimiento" novalidate>
@@ -173,7 +173,7 @@
         </section>
 
         <!-- DASHBOARD -->
-        <section id="dashboard" class="card">
+        <section id="dashboard" class="app-section card">
           <h2 class="section-title">Dashboard</h2>
 
           <div class="dashboard-grid">
@@ -294,7 +294,7 @@
         </section>
 
         <!-- PRESUPUESTO -->
-        <section id="presupuesto" class="card">
+        <section id="presupuesto" class="app-section card">
           <div class="section-header">
             <div>
               <h2 class="section-title">Presupuesto mensual</h2>
@@ -488,7 +488,7 @@
         </section>
 
         <!-- HISTORIAL -->
-        <section id="historial" class="card history-card">
+        <section id="historial" class="app-section card history-card">
           <div class="history-header">
             <h2 class="section-title">Historial</h2>
             <span id="contador-movimientos" class="history-count">0 movimientos</span>
@@ -497,7 +497,7 @@
           <div class="history-list"></div>
         </section>
 
-        <section id="analisis" class="card">
+        <section id="analisis" class="app-section card">
   <h2 class="section-title">Análisis</h2>
   <p class="section-note">Aquí irá el análisis detallado de tus finanzas.</p>
 </section>
