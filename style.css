@@ -125,6 +125,16 @@ button, input, select, textarea { font: inherit; }
   gap: 6px;
 }
 
+.form-actions,
+.security-actions,
+.lock-actions,
+.movimiento-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
 input, select {
   padding: 12px;
   border-radius: 12px;
@@ -273,4 +283,33 @@ input, select {
   .budget-cards-grid { grid-template-columns: repeat(4,1fr); }
   .habits-grid { grid-template-columns: repeat(4,1fr); }
   .form-grid { grid-template-columns: repeat(2,1fr); }
+}
+
+/* MENÚ ESTILO APP */
+.side-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* 👈 separación entre botones */
+}
+
+.menu-link {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: #f1f5f9; /* gris suave */
+  cursor: pointer;
+  color: #0f172a;
+  font-weight: 600;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.menu-link:hover {
+  background: #e2e8f0;
+}
+
+.menu-link:active {
+  transform: scale(0.98);
 }

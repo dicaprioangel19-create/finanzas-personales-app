@@ -169,13 +169,15 @@ btnLimpiarFiltros.addEventListener("click", () => {
 
 // MENÚ
 function abrirMenu() {
-  sideMenu.classList.add("active");
-  menuOverlay.classList.add("active");
+  if (sideMenu) sideMenu.classList.add("active");
+  if (menuOverlay) menuOverlay.classList.add("active");
+  if (menuToggle) menuToggle.classList.add("hidden");
 }
 
 function cerrarMenu() {
-  sideMenu.classList.remove("active");
-  menuOverlay.classList.remove("active");
+  if (sideMenu) sideMenu.classList.remove("active");
+  if (menuOverlay) menuOverlay.classList.remove("active");
+  if (menuToggle) menuToggle.classList.remove("hidden");
 }
 
 function alternarMenu() {
