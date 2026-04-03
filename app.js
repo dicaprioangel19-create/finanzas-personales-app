@@ -112,6 +112,10 @@ const canvasBalance = document.getElementById("grafico-saldo-acumulado");
 const ctxBalance = canvasBalance.getContext("2d");
 const balanceChartWrapper = document.getElementById("balance-chart-wrapper");
 const balanceChartEmptyState = document.getElementById("balance-chart-empty-state");
+const saldoActualGraficoEl = document.getElementById("saldo-actual-grafico");
+const chartTooltip = document.getElementById("chart-tooltip");
+const chartTooltipDate = document.getElementById("chart-tooltip-date");
+const chartTooltipValue = document.getElementById("chart-tooltip-value");
 
 // MENÚ
 const menuToggle = document.getElementById("menu-toggle");
@@ -133,8 +137,13 @@ const COLORES_GRAFICO = [
   "#ea580c", "#4f46e5", "#65a30d", "#db2777", "#0f766e", "#9333ea"
 ];
 
-const COLOR_SALDO_SUBE = "#2563eb";
-const COLOR_SALDO_BAJA = "#dc2626";
+const COLOR_SALDO_SUBE = "#5b8def";
+const COLOR_SALDO_BAJA = "#d46464";
+const COLOR_TEXTO_GRAFICO = "#b2a79a";
+const COLOR_LINEA_GUIA = "rgba(178, 167, 154, 0.14)";
+const COLOR_LINEA_CERO = "rgba(200, 155, 90, 0.28)";
+const COLOR_MES_DIVISOR = "rgba(255, 255, 255, 0.08)";
+const COLOR_FONDO_GRAFICO = "#262422";
 
 document.addEventListener("DOMContentLoaded", () => {
   ocultarMenuBoton();
@@ -952,17 +961,31 @@ function obtenerMesAnterior(mesISO) {
 // SALDO ACUMULADO
 function renderGraficoSaldoAcumulado(lista) {
   limpiarCanvasBalance();
+  ocultarTooltipGrafico();
+
   const datos = obtenerDatosSaldoAcumulado(lista);
 
   if (datos.length < 2) {
     balanceChartWrapper.classList.add("hidden");
     balanceChartEmptyState.classList.remove("hidden");
+
+    if (saldoActualGraficoEl) {
+      saldoActualGraficoEl.textContent = "S/ 0.00";
+    }
+
     return;
   }
 
   balanceChartWrapper.classList.remove("hidden");
   balanceChartEmptyState.classList.add("hidden");
+
+  const ultimoSaldo = datos[datos.length - 1].saldo;
+  if (saldoActualGraficoEl) {
+    saldoActualGraficoEl.textContent = formatearMoneda(ultimoSaldo);
+  }
+
   dibujarGraficoSaldoAcumulado(datos);
+  activarInteraccionGraficoSaldo(datos);
 }
 
 function obtenerDatosSaldoAcumulado(lista) {
@@ -1077,6 +1100,72 @@ function dibujarGraficoSaldoAcumulado(datos) {
 
   dibujarTramosSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight });
   dibujarPuntoFinalSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight });
+}
+
+function dibujarLineasGuiaSaldo({ width, paddingLeft, paddingRight, paddingTop, chartHeight, minValor, maxValor, rango }) {
+  const lineasGuia = 5;
+
+  for (let i = 0; i <= lineasGuia; i++) {
+    const valor = maxValor - (rango / lineasGuia) * i;
+    const y = convertirValorAY(valor, minValor, maxValor, paddingTop, chartHeight);
+
+    ctxBalance.beginPath();
+    ctxBalance.moveTo(paddingLeft, y);
+    ctxBalance.lineTo(width - paddingRight, y);
+    ctxBalance.strokeStyle = COLOR_LINEA_GUIA;
+    ctxBalance.lineWidth = 1;
+    ctxBalance.stroke();
+
+    ctxBalance.fillStyle = COLOR_TEXTO_GRAFICO;
+    ctxBalance.font = "12px Arial";
+    ctxBalance.textAlign = "right";
+    ctxBalance.textBaseline = "middle";
+    ctxBalance.fillText(formatearMonedaCorta(valor), paddingLeft - 10, y);
+  }
+}
+
+function dibujarDivisoresMensuales(datos, { width, height, paddingLeft, paddingRight, paddingTop, paddingBottom, chartWidth }) {
+  if (datos.length < 2) return;
+
+  const xStep = chartWidth / (datos.length - 1);
+
+  for (let i = 1; i < datos.length; i++) {
+    const mesActual = datos[i].fechaISO.slice(0, 7);
+    const mesAnterior = datos[i - 1].fechaISO.slice(0, 7);
+
+    if (mesActual !== mesAnterior) {
+      const x = paddingLeft + xStep * i;
+
+      ctxBalance.beginPath();
+      ctxBalance.moveTo(x, paddingTop);
+      ctxBalance.lineTo(x, height - paddingBottom);
+      ctxBalance.strokeStyle = COLOR_MES_DIVISOR;
+      ctxBalance.lineWidth = 1;
+      ctxBalance.stroke();
+    }
+  }
+}
+
+function dibujarEtiquetasTiempo(datos, { height, paddingLeft, paddingBottom, xStep }) {
+  const cantidadEtiquetas = 6;
+  const pasoEtiquetas = Math.max(1, Math.ceil(datos.length / cantidadEtiquetas));
+
+  datos.forEach((dato, index) => {
+    const esUltimo = index === datos.length - 1;
+    if (index % pasoEtiquetas !== 0 && !esUltimo) return;
+
+    const x = paddingLeft + xStep * index;
+    const y = height - paddingBottom + 20;
+
+    const fecha = new Date(`${dato.fechaISO}T00:00:00`);
+    const dia = String(fecha.getDate());
+
+    ctxBalance.fillStyle = COLOR_TEXTO_GRAFICO;
+    ctxBalance.font = "12px Arial";
+    ctxBalance.textAlign = "center";
+    ctxBalance.textBaseline = "middle";
+    ctxBalance.fillText(dia, x, y);
+  });
 }
 
 function dibujarTramosSaldo(datos, medidas) {
