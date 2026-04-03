@@ -120,6 +120,14 @@ const menuOverlay = document.getElementById("menu-overlay");
 const menuLinks = document.querySelectorAll(".menu-link");
 const appSections = document.querySelectorAll(".app-section");
 
+function mostrarMenuBoton() {
+  menuToggle.classList.remove("hidden");
+}
+
+function ocultarMenuBoton() {
+  menuToggle.classList.add("hidden");
+}
+
 const COLORES_GRAFICO = [
   "#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2",
   "#ea580c", "#4f46e5", "#65a30d", "#db2777", "#0f766e", "#9333ea"
@@ -129,6 +137,8 @@ const COLOR_SALDO_SUBE = "#2563eb";
 const COLOR_SALDO_BAJA = "#dc2626";
 
 document.addEventListener("DOMContentLoaded", () => {
+  ocultarMenuBoton();
+
   colocarFechaActualPorDefecto();
   inicializarMesPresupuesto();
   configurarSeguridadUI();
@@ -274,16 +284,17 @@ function manejarLockForm(e) {
   e.preventDefault();
 
   if (modoLock === "unlock") {
-    const pin = lockPin.value.trim();
+  const pin = lockPin.value.trim();
 
-    if (pin !== pinGuardado) {
-      mostrarMensajeLock("PIN incorrecto.", "error");
-      return;
-    }
-
-    desbloquearApp();
+  if (pin !== pinGuardado) {
+    mostrarMensajeLock("PIN incorrecto.", "error");
     return;
   }
+
+  desbloquearApp();
+mostrarMenuBoton();
+  return;
+}
 
   const nuevo = lockPinNew.value.trim();
   const confirmar = lockPinConfirm.value.trim();
