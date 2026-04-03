@@ -11,15 +11,12 @@
 </head>
 
 <body>
-  <!-- BOTÓN HAMBURGUESA -->
   <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
     ☰
   </button>
 
-  <!-- FONDO OSCURO -->
   <div id="menu-overlay" class="menu-overlay"></div>
 
-  <!-- MENÚ LATERAL -->
   <aside id="side-menu" class="side-menu">
     <div class="side-menu-header">
       <h2>Menú</h2>
@@ -33,7 +30,6 @@
     </nav>
   </aside>
 
-  <!-- PANTALLA DE BLOQUEO -->
   <div id="lock-screen" class="lock-screen">
     <div class="lock-card">
       <h2 id="lock-title" class="lock-title">Desbloquear app</h2>
@@ -91,16 +87,14 @@
     </div>
   </div>
 
-  <!-- APP -->
   <div id="app-container" class="hidden">
     <div class="app">
       <header class="app-header">
         <h1>Finanzas Personales</h1>
-        <p class="subtitle">Controla tus ingresos y gastos desde una PWA ligera</p>
+        <p class="subtitle">Controla tus ingresos y egresos desde una PWA ligera</p>
       </header>
 
       <main class="main-grid">
-        <!-- REGISTRO -->
         <section id="registro" class="app-section card">
           <h2 class="section-title">Registrar movimiento</h2>
 
@@ -111,7 +105,16 @@
                 <select id="tipo" required>
                   <option value="">Selecciona</option>
                   <option value="ingreso">Ingreso</option>
+                  <option value="egreso">Egreso</option>
+                </select>
+              </div>
+
+              <div id="subtipo-egreso-group" class="field hidden">
+                <label for="subtipo-egreso">Clase de egreso</label>
+                <select id="subtipo-egreso">
+                  <option value="">Selecciona</option>
                   <option value="gasto">Gasto</option>
+                  <option value="inversion">Inversión</option>
                 </select>
               </div>
 
@@ -120,7 +123,7 @@
                 <input
                   id="categoria"
                   type="text"
-                  placeholder="Ej: Comida, Transporte, Sueldo"
+                  placeholder="Ej: Comida, Transporte, Educación"
                   maxlength="40"
                   required
                 />
@@ -171,7 +174,7 @@
             <div class="section-header">
               <div>
                 <h2 class="section-title">Saldo acumulado</h2>
-                <p class="section-note">Una sola línea: sube con ingresos, baja con gastos y se mantiene cuando no hay cambios</p>
+                <p class="section-note">Una sola línea: sube con ingresos, baja con egresos y se mantiene cuando no hay cambios</p>
               </div>
             </div>
 
@@ -187,7 +190,7 @@
                 </div>
                 <div class="mini-legend-item">
                   <span class="mini-legend-color mini-legend-drop"></span>
-                  <span>Tramo de bajada por gasto</span>
+                  <span>Tramo de bajada por egreso</span>
                 </div>
               </div>
 
@@ -207,7 +210,6 @@
           </div>
         </section>
 
-        <!-- DASHBOARD -->
         <section id="dashboard" class="app-section card">
           <h2 class="section-title">Dashboard</h2>
 
@@ -218,8 +220,8 @@
             </article>
 
             <article class="stat-card stat-expense">
-              <span class="stat-label">Gastos</span>
-              <strong id="total-gastos">S/ 0.00</strong>
+              <span class="stat-label">Egresos</span>
+              <strong id="total-egresos">S/ 0.00</strong>
             </article>
 
             <article class="stat-card stat-balance">
@@ -237,7 +239,7 @@
                 <select id="filtro-tipo">
                   <option value="todos">Todos</option>
                   <option value="ingreso">Ingresos</option>
-                  <option value="gasto">Gastos</option>
+                  <option value="egreso">Egresos</option>
                 </select>
               </div>
 
@@ -269,19 +271,19 @@
 
             <div id="habitos-grid" class="habits-grid">
               <article class="habit-card">
-                <span class="habit-label">Mayor categoría de gasto</span>
+                <span class="habit-label">Mayor categoría de egreso</span>
                 <strong id="habit-top-category">—</strong>
                 <p id="habit-top-category-detail" class="habit-detail">Sin datos</p>
               </article>
 
               <article class="habit-card">
-                <span class="habit-label">Promedio por gasto</span>
+                <span class="habit-label">Promedio por egreso</span>
                 <strong id="habit-average-expense">—</strong>
                 <p id="habit-average-expense-detail" class="habit-detail">Sin datos</p>
               </article>
 
               <article class="habit-card">
-                <span class="habit-label">Día con más gasto</span>
+                <span class="habit-label">Día con más egreso</span>
                 <strong id="habit-top-day">—</strong>
                 <p id="habit-top-day-detail" class="habit-detail">Sin datos</p>
               </article>
@@ -293,19 +295,19 @@
               </article>
 
               <article class="habit-card">
-                <span class="habit-label">Gasto más repetido</span>
+                <span class="habit-label">Egreso más repetido</span>
                 <strong id="habit-most-repeated-expense">—</strong>
                 <p id="habit-most-repeated-expense-detail" class="habit-detail">Sin datos</p>
               </article>
 
               <article class="habit-card">
-                <span class="habit-label">Dónde gastas más</span>
+                <span class="habit-label">Dónde egresas más</span>
                 <strong id="habit-week-pattern">—</strong>
                 <p id="habit-week-pattern-detail" class="habit-detail">Sin datos</p>
               </article>
 
               <article class="habit-card">
-                <span class="habit-label">Racha de días con gasto</span>
+                <span class="habit-label">Racha de días con egreso</span>
                 <strong id="habit-expense-streak">—</strong>
                 <p id="habit-expense-streak-detail" class="habit-detail">Sin datos</p>
               </article>
@@ -324,10 +326,10 @@
           </div>
 
           <div class="inner-section card">
-            <h2 class="section-title">Gráfico de gastos por categoría</h2>
+            <h2 class="section-title">Gráfico de egresos por categoría</h2>
 
             <div id="chart-empty-state" class="empty-state hidden">
-              No hay gastos para mostrar en el gráfico con los filtros actuales.
+              No hay egresos para mostrar en el gráfico con los filtros actuales.
             </div>
 
             <div id="chart-wrapper" class="chart-wrapper">
@@ -340,17 +342,16 @@
           </div>
 
           <div class="inner-section card">
-            <h2 class="section-title">Gastos por categoría</h2>
+            <h2 class="section-title">Egresos por categoría</h2>
             <div id="categorias-resumen" class="categories-list"></div>
           </div>
         </section>
 
-        <!-- PRESUPUESTO -->
         <section id="presupuesto" class="app-section card">
           <div class="section-header">
             <div>
               <h2 class="section-title">Presupuesto mensual</h2>
-              <p class="section-note">Define cuánto quieres gastar en un mes y compáralo con tus gastos reales</p>
+              <p class="section-note">Define cuánto quieres egresar en un mes y compáralo con tus egresos reales</p>
             </div>
           </div>
 
@@ -389,7 +390,7 @@
             </article>
 
             <article class="budget-card">
-              <span class="stat-label">Gastado</span>
+              <span class="stat-label">Egresado</span>
               <strong id="budget-spent">S/ 0.00</strong>
             </article>
 
@@ -416,7 +417,6 @@
           </div>
         </section>
 
-        <!-- PERFIL -->
         <section id="perfil" class="app-section card">
           <h2 class="section-title">Perfil</h2>
 

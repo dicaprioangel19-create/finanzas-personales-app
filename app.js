@@ -25,6 +25,8 @@ const lockPinConfirm = document.getElementById("lock-pin-confirm");
 // FORM MOVIMIENTO
 const form = document.getElementById("form-movimiento");
 const tipoInput = document.getElementById("tipo");
+const subtipoEgresoGroup = document.getElementById("subtipo-egreso-group");
+const subtipoEgresoInput = document.getElementById("subtipo-egreso");
 const categoriaInput = document.getElementById("categoria");
 const descripcionInput = document.getElementById("descripcion");
 const montoInput = document.getElementById("monto");
@@ -40,7 +42,7 @@ const btnLimpiarFiltros = document.getElementById("btn-limpiar-filtros");
 
 // DASHBOARD
 const totalIngresosEl = document.getElementById("total-ingresos");
-const totalGastosEl = document.getElementById("total-gastos");
+const totalEgresosEl = document.getElementById("total-egresos");
 const balanceTotalEl = document.getElementById("balance-total");
 
 // SEGURIDAD
@@ -131,12 +133,14 @@ document.addEventListener("DOMContentLoaded", () => {
   inicializarMesPresupuesto();
   configurarSeguridadUI();
   iniciarSistemaPIN();
+  actualizarUIEgreso();
   mostrarSeccion("registro");
 });
 
 lockForm.addEventListener("submit", manejarLockForm);
 form.addEventListener("submit", manejarSubmitFormulario);
 btnCancelarEdicion.addEventListener("click", cancelarEdicion);
+tipoInput.addEventListener("change", actualizarUIEgreso);
 
 securityForm.addEventListener("submit", manejarGuardarPin);
 btnDeletePin.addEventListener("click", manejarEliminarPin);
@@ -163,7 +167,7 @@ btnLimpiarFiltros.addEventListener("click", () => {
   mostrarMensaje("Filtros limpiados correctamente.", "success");
 });
 
-// ===== MENÚ HAMBURGUESA (MODO APP) =====
+// MENÚ
 function abrirMenu() {
   sideMenu.classList.add("active");
   menuOverlay.classList.add("active");
@@ -383,17 +387,27 @@ function mostrarMensajeSeguridad(texto, tipo) {
   }, 3000);
 }
 
-// MOVIMIENTOS
+// FORMULARIO
+function actualizarUIEgreso() {
+  const esEgreso = tipoInput.value === "egreso";
+  subtipoEgresoGroup.classList.toggle("hidden", !esEgreso);
+
+  if (!esEgreso) {
+    subtipoEgresoInput.value = "";
+  }
+}
+
 function manejarSubmitFormulario(e) {
   e.preventDefault();
 
   const tipo = tipoInput.value.trim();
+  const subtipo = tipo === "egreso" ? subtipoEgresoInput.value.trim() : "";
   const categoria = capitalizarTexto(categoriaInput.value.trim());
   const descripcion = descripcionInput.value.trim();
   const monto = Number(montoInput.value);
   const fecha = fechaInput.value;
 
-  const errores = validarFormulario({ tipo, categoria, descripcion, monto, fecha });
+  const errores = validarFormulario({ tipo, subtipo, categoria, descripcion, monto, fecha });
   if (errores.length > 0) {
     mostrarMensaje(errores[0], "error");
     return;
@@ -412,6 +426,7 @@ function manejarSubmitFormulario(e) {
     movimientos[index] = {
       ...movimientos[index],
       tipo,
+      subtipo,
       categoria,
       descripcion,
       monto,
@@ -430,6 +445,7 @@ function manejarSubmitFormulario(e) {
   movimientos.unshift({
     id: Date.now(),
     tipo,
+    subtipo,
     categoria,
     descripcion,
     monto,
@@ -470,12 +486,18 @@ function obtenerMovimientosFiltrados() {
 }
 
 function renderDashboard(lista) {
-  const totalIngresos = lista.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + m.monto, 0);
-  const totalGastos = lista.filter((m) => m.tipo === "gasto").reduce((a, m) => a + m.monto, 0);
-  const balance = totalIngresos - totalGastos;
+  const totalIngresos = lista
+    .filter((m) => m.tipo === "ingreso")
+    .reduce((a, m) => a + m.monto, 0);
+
+  const totalEgresos = lista
+    .filter((m) => m.tipo === "egreso")
+    .reduce((a, m) => a + m.monto, 0);
+
+  const balance = totalIngresos - totalEgresos;
 
   totalIngresosEl.textContent = formatearMoneda(totalIngresos);
-  totalGastosEl.textContent = formatearMoneda(totalGastos);
+  totalEgresosEl.textContent = formatearMoneda(totalEgresos);
   balanceTotalEl.textContent = formatearMoneda(balance);
 }
 
@@ -521,38 +543,38 @@ function eliminarPresupuestoMesActual() {
 function renderPresupuestoMensual() {
   const mesActivo = obtenerMesPresupuestoActivo();
   const presupuesto = Number(presupuestos[mesActivo] || 0);
-  const gastoReal = obtenerGastoDelMes(mesActivo);
+  const egresoReal = obtenerEgresoDelMes(mesActivo);
 
   presupuestoMesInput.value = mesActivo;
   presupuestoMontoInput.value = presupuesto > 0 ? presupuesto : "";
 
   budgetTitle.textContent = `Resumen del presupuesto de ${formatearMesTitulo(mesActivo)}`;
   budgetTotalEl.textContent = formatearMoneda(presupuesto);
-  budgetSpentEl.textContent = formatearMoneda(gastoReal);
+  budgetSpentEl.textContent = formatearMoneda(egresoReal);
 
   if (presupuesto <= 0) {
     budgetRemainingEl.textContent = "—";
     budgetPercentEl.textContent = "—";
-    actualizarEstadoSinPresupuesto(gastoReal);
+    actualizarEstadoSinPresupuesto(egresoReal);
     btnEliminarPresupuesto.classList.add("hidden");
     return;
   }
 
-  const disponible = presupuesto - gastoReal;
-  const porcentajeUsado = (gastoReal / presupuesto) * 100;
+  const disponible = presupuesto - egresoReal;
+  const porcentajeUsado = (egresoReal / presupuesto) * 100;
 
   budgetRemainingEl.textContent = formatearMoneda(disponible);
   budgetPercentEl.textContent = `${porcentajeUsado.toFixed(1)}%`;
-  actualizarEstadoBarraPresupuesto(gastoReal, porcentajeUsado);
+  actualizarEstadoBarraPresupuesto(egresoReal, porcentajeUsado);
   btnEliminarPresupuesto.classList.remove("hidden");
 }
 
-function actualizarEstadoSinPresupuesto(gastoReal) {
+function actualizarEstadoSinPresupuesto(egresoReal) {
   budgetProgressFill.className = "budget-progress-fill";
   budgetProgressFill.style.width = "0%";
   budgetProgressText.textContent = "—";
-  budgetStatusLabel.textContent = gastoReal > 0
-    ? "Tienes gastos registrados, pero no hay presupuesto configurado"
+  budgetStatusLabel.textContent = egresoReal > 0
+    ? "Tienes egresos registrados, pero no hay presupuesto configurado"
     : "Sin presupuesto configurado";
 }
 
@@ -560,13 +582,13 @@ function obtenerMesPresupuestoActivo() {
   return filtroMes.value || obtenerMesActual();
 }
 
-function obtenerGastoDelMes(mesISO) {
+function obtenerEgresoDelMes(mesISO) {
   return movimientos
-    .filter((mov) => mov.tipo === "gasto" && mov.fechaISO.startsWith(mesISO))
+    .filter((mov) => mov.tipo === "egreso" && mov.fechaISO.startsWith(mesISO))
     .reduce((acc, mov) => acc + mov.monto, 0);
 }
 
-function actualizarEstadoBarraPresupuesto(gastoReal, porcentajeUsado) {
+function actualizarEstadoBarraPresupuesto(egresoReal, porcentajeUsado) {
   budgetProgressFill.className = "budget-progress-fill";
   budgetProgressFill.style.width = `${Math.min(porcentajeUsado, 100)}%`;
   budgetProgressText.textContent = `${porcentajeUsado.toFixed(1)}%`;
@@ -618,18 +640,18 @@ function renderHabitos(lista) {
   habitosGrid.classList.remove("hidden");
   habitosEmptyState.classList.add("hidden");
 
-  const gastos = lista.filter((mov) => mov.tipo === "gasto");
+  const egresos = lista.filter((mov) => mov.tipo === "egreso");
   const ingresos = lista.filter((mov) => mov.tipo === "ingreso");
 
-  renderMayorCategoriaGasto(gastos);
-  renderPromedioGastos(gastos);
-  renderDiaMasGasto(gastos);
-  renderConteoMovimientos(lista, ingresos, gastos);
-  renderGastoMasRepetido(gastos);
-  renderSemanaVsFinDeSemana(gastos);
-  renderRachaGastos(gastos);
+  renderMayorCategoriaEgreso(egresos);
+  renderPromedioEgresos(egresos);
+  renderDiaMasEgreso(egresos);
+  renderConteoMovimientos(lista, ingresos, egresos);
+  renderEgresoMasRepetido(egresos);
+  renderSemanaVsFinDeSemana(egresos);
+  renderRachaEgresos(egresos);
   renderCategoriaQueMasCrecio();
-  renderConclusionesHabitos(lista, ingresos, gastos);
+  renderConclusionesHabitos(lista, ingresos, egresos);
 }
 
 function resetHabitosCards() {
@@ -651,73 +673,73 @@ function resetHabitosCards() {
   habitGrowingCategoryDetail.textContent = "Sin datos";
 }
 
-function renderMayorCategoriaGasto(gastos) {
-  if (gastos.length === 0) {
+function renderMayorCategoriaEgreso(egresos) {
+  if (egresos.length === 0) {
     habitTopCategory.textContent = "—";
-    habitTopCategoryDetail.textContent = "No hay gastos visibles para analizar.";
+    habitTopCategoryDetail.textContent = "No hay egresos visibles para analizar.";
     return;
   }
 
   const agrupado = {};
-  gastos.forEach((mov) => {
+  egresos.forEach((mov) => {
     agrupado[mov.categoria] = (agrupado[mov.categoria] || 0) + mov.monto;
   });
 
   const [categoria, total] = Object.entries(agrupado).sort((a, b) => b[1] - a[1])[0];
-  const totalGastos = gastos.reduce((acc, mov) => acc + mov.monto, 0);
-  const porcentaje = totalGastos > 0 ? (total / totalGastos) * 100 : 0;
+  const totalEgresos = egresos.reduce((acc, mov) => acc + mov.monto, 0);
+  const porcentaje = totalEgresos > 0 ? (total / totalEgresos) * 100 : 0;
 
   habitTopCategory.textContent = categoria;
-  habitTopCategoryDetail.textContent = `${formatearMoneda(total)} • ${porcentaje.toFixed(1)}% del gasto visible`;
+  habitTopCategoryDetail.textContent = `${formatearMoneda(total)} • ${porcentaje.toFixed(1)}% del egreso visible`;
 }
 
-function renderPromedioGastos(gastos) {
-  if (gastos.length === 0) {
+function renderPromedioEgresos(egresos) {
+  if (egresos.length === 0) {
     habitAverageExpense.textContent = "—";
-    habitAverageExpenseDetail.textContent = "No hay gastos visibles para calcular promedio.";
+    habitAverageExpenseDetail.textContent = "No hay egresos visibles para calcular promedio.";
     return;
   }
 
-  const total = gastos.reduce((acc, mov) => acc + mov.monto, 0);
-  const promedio = total / gastos.length;
+  const total = egresos.reduce((acc, mov) => acc + mov.monto, 0);
+  const promedio = total / egresos.length;
 
   habitAverageExpense.textContent = formatearMoneda(promedio);
-  habitAverageExpenseDetail.textContent = `${gastos.length} gasto(s) visibles en este análisis`;
+  habitAverageExpenseDetail.textContent = `${egresos.length} egreso(s) visibles en este análisis`;
 }
 
-function renderDiaMasGasto(gastos) {
-  if (gastos.length === 0) {
+function renderDiaMasEgreso(egresos) {
+  if (egresos.length === 0) {
     habitTopDay.textContent = "—";
-    habitTopDayDetail.textContent = "No hay gastos visibles por día.";
+    habitTopDayDetail.textContent = "No hay egresos visibles por día.";
     return;
   }
 
   const agrupadoPorDia = {};
-  gastos.forEach((mov) => {
+  egresos.forEach((mov) => {
     agrupadoPorDia[mov.fechaISO] = (agrupadoPorDia[mov.fechaISO] || 0) + mov.monto;
   });
 
   const [fechaISO, total] = Object.entries(agrupadoPorDia).sort((a, b) => b[1] - a[1])[0];
   habitTopDay.textContent = formatearFechaHumana(fechaISO);
-  habitTopDayDetail.textContent = `${formatearMoneda(total)} gastados ese día`;
+  habitTopDayDetail.textContent = `${formatearMoneda(total)} egresados ese día`;
 }
 
-function renderConteoMovimientos(lista, ingresos, gastos) {
+function renderConteoMovimientos(lista, ingresos, egresos) {
   habitMovementCount.textContent = `${lista.length}`;
-  habitMovementCountDetail.textContent = `${ingresos.length} ingreso(s) • ${gastos.length} gasto(s) visibles`;
+  habitMovementCountDetail.textContent = `${ingresos.length} ingreso(s) • ${egresos.length} egreso(s) visibles`;
 }
 
-function renderGastoMasRepetido(gastos) {
-  if (gastos.length === 0) {
+function renderEgresoMasRepetido(egresos) {
+  if (egresos.length === 0) {
     habitMostRepeatedExpense.textContent = "—";
-    habitMostRepeatedExpenseDetail.textContent = "No hay gastos visibles para detectar repetición.";
+    habitMostRepeatedExpenseDetail.textContent = "No hay egresos visibles para detectar repetición.";
     return;
   }
 
   const frecuencia = {};
   const montos = {};
 
-  gastos.forEach((mov) => {
+  egresos.forEach((mov) => {
     const key = mov.descripcion.trim().toLowerCase();
     frecuencia[key] = (frecuencia[key] || 0) + 1;
     montos[key] = (montos[key] || 0) + mov.monto;
@@ -732,17 +754,17 @@ function renderGastoMasRepetido(gastos) {
   habitMostRepeatedExpenseDetail.textContent = `${veces} vez/veces • ${formatearMoneda(total)} acumulados`;
 }
 
-function renderSemanaVsFinDeSemana(gastos) {
-  if (gastos.length === 0) {
+function renderSemanaVsFinDeSemana(egresos) {
+  if (egresos.length === 0) {
     habitWeekPattern.textContent = "—";
-    habitWeekPatternDetail.textContent = "No hay gastos visibles para comparar días.";
+    habitWeekPatternDetail.textContent = "No hay egresos visibles para comparar días.";
     return;
   }
 
   let totalSemana = 0;
   let totalFinSemana = 0;
 
-  gastos.forEach((mov) => {
+  egresos.forEach((mov) => {
     const fecha = new Date(`${mov.fechaISO}T00:00:00`);
     const dia = fecha.getDay();
 
@@ -761,18 +783,18 @@ function renderSemanaVsFinDeSemana(gastos) {
     habitWeekPatternDetail.textContent = `${formatearMoneda(totalSemana)} vs ${formatearMoneda(totalFinSemana)} en fin de semana`;
   } else {
     habitWeekPattern.textContent = "Empate";
-    habitWeekPatternDetail.textContent = `Mismo gasto en ambos grupos: ${formatearMoneda(totalSemana)}`;
+    habitWeekPatternDetail.textContent = `Mismo egreso en ambos grupos: ${formatearMoneda(totalSemana)}`;
   }
 }
 
-function renderRachaGastos(gastos) {
-  if (gastos.length === 0) {
+function renderRachaEgresos(egresos) {
+  if (egresos.length === 0) {
     habitExpenseStreak.textContent = "—";
-    habitExpenseStreakDetail.textContent = "No hay gastos visibles para calcular racha.";
+    habitExpenseStreakDetail.textContent = "No hay egresos visibles para calcular racha.";
     return;
   }
 
-  const diasUnicos = [...new Set(gastos.map((g) => g.fechaISO))].sort();
+  const diasUnicos = [...new Set(egresos.map((g) => g.fechaISO))].sort();
   let maxRacha = 1;
   let rachaActual = 1;
 
@@ -790,24 +812,24 @@ function renderRachaGastos(gastos) {
   }
 
   habitExpenseStreak.textContent = `${maxRacha} día(s)`;
-  habitExpenseStreakDetail.textContent = "Mayor racha seguida con al menos un gasto";
+  habitExpenseStreakDetail.textContent = "Mayor racha seguida con al menos un egreso";
 }
 
 function renderCategoriaQueMasCrecio() {
   const mesActualAnalisis = filtroMes.value || obtenerMesActual();
   const mesAnterior = obtenerMesAnterior(mesActualAnalisis);
 
-  const gastosActual = movimientos.filter((m) => m.tipo === "gasto" && m.fechaISO.startsWith(mesActualAnalisis));
-  const gastosAnterior = movimientos.filter((m) => m.tipo === "gasto" && m.fechaISO.startsWith(mesAnterior));
+  const egresosActual = movimientos.filter((m) => m.tipo === "egreso" && m.fechaISO.startsWith(mesActualAnalisis));
+  const egresosAnterior = movimientos.filter((m) => m.tipo === "egreso" && m.fechaISO.startsWith(mesAnterior));
 
-  if (gastosActual.length === 0 || gastosAnterior.length === 0) {
+  if (egresosActual.length === 0 || egresosAnterior.length === 0) {
     habitGrowingCategory.textContent = "—";
     habitGrowingCategoryDetail.textContent = "No hay base suficiente entre mes actual y mes anterior.";
     return;
   }
 
-  const actualPorCategoria = agruparMontosPorCategoria(gastosActual);
-  const anteriorPorCategoria = agruparMontosPorCategoria(gastosAnterior);
+  const actualPorCategoria = agruparMontosPorCategoria(egresosActual);
+  const anteriorPorCategoria = agruparMontosPorCategoria(egresosAnterior);
 
   let mejorCategoria = null;
   let mayorDiferencia = 0;
@@ -833,24 +855,24 @@ function renderCategoriaQueMasCrecio() {
   habitGrowingCategoryDetail.textContent = `${formatearMoneda(mayorDiferencia)} más que en ${formatearMesTitulo(mesAnterior)}`;
 }
 
-function agruparMontosPorCategoria(gastos) {
+function agruparMontosPorCategoria(lista) {
   const agrupado = {};
-  gastos.forEach((mov) => {
+  lista.forEach((mov) => {
     agrupado[mov.categoria] = (agrupado[mov.categoria] || 0) + mov.monto;
   });
   return agrupado;
 }
 
-function renderConclusionesHabitos(lista, ingresos, gastos) {
+function renderConclusionesHabitos(lista, ingresos, egresos) {
   const insights = [];
 
-  if (gastos.length > 0) {
-    const totalGastos = gastos.reduce((acc, mov) => acc + mov.monto, 0);
-    const promedio = totalGastos / gastos.length;
-    insights.push(`Tus gastos visibles suman ${formatearMoneda(totalGastos)}.`);
-    insights.push(`El gasto promedio por movimiento es ${formatearMoneda(promedio)}.`);
+  if (egresos.length > 0) {
+    const totalEgresos = egresos.reduce((acc, mov) => acc + mov.monto, 0);
+    const promedio = totalEgresos / egresos.length;
+    insights.push(`Tus egresos visibles suman ${formatearMoneda(totalEgresos)}.`);
+    insights.push(`El egreso promedio por movimiento es ${formatearMoneda(promedio)}.`);
   } else {
-    insights.push("No hay gastos visibles en los filtros actuales, así que no se puede detectar patrón de gasto.");
+    insights.push("No hay egresos visibles en los filtros actuales, así que no se puede detectar patrón de egreso.");
   }
 
   if (ingresos.length > 0) {
@@ -864,14 +886,14 @@ function renderConclusionesHabitos(lista, ingresos, gastos) {
 
   const balanceVisible =
     ingresos.reduce((acc, mov) => acc + mov.monto, 0) -
-    gastos.reduce((acc, mov) => acc + mov.monto, 0);
+    egresos.reduce((acc, mov) => acc + mov.monto, 0);
 
   if (balanceVisible > 0) {
     insights.push(`En el conjunto visible, tu balance es positivo: ${formatearMoneda(balanceVisible)}.`);
   } else if (balanceVisible < 0) {
     insights.push(`En el conjunto visible, tu balance es negativo: ${formatearMoneda(balanceVisible)}.`);
   } else {
-    insights.push("En el conjunto visible, tus ingresos y gastos están equilibrados.");
+    insights.push("En el conjunto visible, tus ingresos y egresos están equilibrados.");
   }
 
   habitosInsights.innerHTML = insights
@@ -883,29 +905,29 @@ function generarComparacionMesAnterior() {
   const mesActualAnalisis = filtroMes.value || obtenerMesActual();
   const mesAnterior = obtenerMesAnterior(mesActualAnalisis);
 
-  const gastoMesActual = obtenerGastoDelMes(mesActualAnalisis);
-  const gastoMesAnterior = obtenerGastoDelMes(mesAnterior);
+  const egresoMesActual = obtenerEgresoDelMes(mesActualAnalisis);
+  const egresoMesAnterior = obtenerEgresoDelMes(mesAnterior);
 
-  if (gastoMesActual === 0 && gastoMesAnterior === 0) {
-    return "No hay gastos en el mes actual ni en el mes anterior para comparar.";
+  if (egresoMesActual === 0 && egresoMesAnterior === 0) {
+    return "No hay egresos en el mes actual ni en el mes anterior para comparar.";
   }
 
-  if (gastoMesAnterior === 0 && gastoMesActual > 0) {
-    return `En ${formatearMesTitulo(mesActualAnalisis)} tienes gastos visibles, pero en ${formatearMesTitulo(mesAnterior)} no hay base para comparar.`;
+  if (egresoMesAnterior === 0 && egresoMesActual > 0) {
+    return `En ${formatearMesTitulo(mesActualAnalisis)} tienes egresos visibles, pero en ${formatearMesTitulo(mesAnterior)} no hay base para comparar.`;
   }
 
-  const diferencia = gastoMesActual - gastoMesAnterior;
-  const porcentaje = (Math.abs(diferencia) / gastoMesAnterior) * 100;
+  const diferencia = egresoMesActual - egresoMesAnterior;
+  const porcentaje = (Math.abs(diferencia) / egresoMesAnterior) * 100;
 
   if (diferencia > 0) {
-    return `Gastaste ${formatearMoneda(diferencia)} más que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% más).`;
+    return `Egresaste ${formatearMoneda(diferencia)} más que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% más).`;
   }
 
   if (diferencia < 0) {
-    return `Gastaste ${formatearMoneda(Math.abs(diferencia))} menos que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% menos).`;
+    return `Egresaste ${formatearMoneda(Math.abs(diferencia))} menos que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% menos).`;
   }
 
-  return `Tus gastos en ${formatearMesTitulo(mesActualAnalisis)} son iguales a los de ${formatearMesTitulo(mesAnterior)}.`;
+  return `Tus egresos en ${formatearMesTitulo(mesActualAnalisis)} son iguales a los de ${formatearMesTitulo(mesAnterior)}.`;
 }
 
 function obtenerMesAnterior(mesISO) {
@@ -1098,8 +1120,8 @@ function limpiarCanvasBalance() {
 
 // GRÁFICO CIRCULAR
 function renderGraficoCategorias(lista) {
-  const gastos = lista.filter((mov) => mov.tipo === "gasto");
-  const datos = obtenerDatosCategorias(gastos);
+  const egresos = lista.filter((mov) => mov.tipo === "egreso");
+  const datos = obtenerDatosCategorias(egresos);
 
   limpiarCanvasGrafico();
   chartLegend.innerHTML = "";
@@ -1117,20 +1139,20 @@ function renderGraficoCategorias(lista) {
   renderLeyendaGrafico(datos);
 }
 
-function obtenerDatosCategorias(gastos) {
+function obtenerDatosCategorias(egresos) {
   const agrupado = {};
-  gastos.forEach((mov) => {
+  egresos.forEach((mov) => {
     agrupado[mov.categoria] = (agrupado[mov.categoria] || 0) + mov.monto;
   });
 
-  const totalGastos = gastos.reduce((acc, mov) => acc + mov.monto, 0);
+  const totalEgresos = egresos.reduce((acc, mov) => acc + mov.monto, 0);
 
   return Object.entries(agrupado)
     .sort((a, b) => b[1] - a[1])
     .map(([categoria, total], index) => ({
       categoria,
       total,
-      porcentaje: totalGastos > 0 ? (total / totalGastos) * 100 : 0,
+      porcentaje: totalEgresos > 0 ? (total / totalEgresos) * 100 : 0,
       color: COLORES_GRAFICO[index % COLORES_GRAFICO.length]
     }));
 }
@@ -1169,7 +1191,7 @@ function dibujarGraficoCircular(datos) {
   ctxGrafico.font = "600 14px Arial";
   ctxGrafico.textAlign = "center";
   ctxGrafico.textBaseline = "middle";
-  ctxGrafico.fillText("Total gastos", centroX, centroY - 12);
+  ctxGrafico.fillText("Total egresos", centroX, centroY - 12);
 
   ctxGrafico.fillStyle = "#0f172a";
   ctxGrafico.font = "700 18px Arial";
@@ -1185,7 +1207,7 @@ function renderLeyendaGrafico(datos) {
           <span class="legend-name">${escapeHTML(item.categoria)}</span>
           <span class="legend-amount">${formatearMoneda(item.total)}</span>
         </div>
-        <span class="legend-percent">${item.porcentaje.toFixed(1)}% del gasto</span>
+        <span class="legend-percent">${item.porcentaje.toFixed(1)}% del egreso</span>
       </div>
     </div>
   `).join("");
@@ -1197,11 +1219,11 @@ function limpiarCanvasGrafico() {
 
 // CATEGORÍAS
 function renderResumenCategorias(lista) {
-  const gastos = lista.filter((mov) => mov.tipo === "gasto");
-  const datos = obtenerDatosCategorias(gastos);
+  const egresos = lista.filter((mov) => mov.tipo === "egreso");
+  const datos = obtenerDatosCategorias(egresos);
 
   if (datos.length === 0) {
-    categoriasResumenEl.innerHTML = `<div class="empty-state">No hay gastos para mostrar en categorías con los filtros actuales.</div>`;
+    categoriasResumenEl.innerHTML = `<div class="empty-state">No hay egresos para mostrar en categorías con los filtros actuales.</div>`;
     return;
   }
 
@@ -1211,7 +1233,7 @@ function renderResumenCategorias(lista) {
         <div class="category-name">${escapeHTML(item.categoria)}</div>
         <div class="category-meta">
           <span class="category-amount">${formatearMoneda(item.total)}</span>
-          <span class="category-percent">${item.porcentaje.toFixed(1)}% del gasto</span>
+          <span class="category-percent">${item.porcentaje.toFixed(1)}% del egreso</span>
         </div>
       </div>
       <div class="progress-track">
@@ -1231,14 +1253,18 @@ function renderHistorial(lista) {
   }
 
   historyListEl.innerHTML = lista.map((mov) => {
-    const claseBadge = mov.tipo === "ingreso" ? "badge-ingreso" : "badge-gasto";
-    const claseMonto = mov.tipo === "ingreso" ? "monto-ingreso" : "monto-gasto";
-    const signo = mov.tipo === "ingreso" ? "+" : "-";
+    const esIngreso = mov.tipo === "ingreso";
+    const claseBadge = esIngreso ? "badge-ingreso" : "badge-gasto";
+    const claseMonto = esIngreso ? "monto-ingreso" : "monto-gasto";
+    const signo = esIngreso ? "+" : "-";
+    const tipoVisible = esIngreso
+      ? "Ingreso"
+      : `Egreso${mov.subtipo ? ` • ${capitalizarTexto(mov.subtipo)}` : ""}`;
 
     return `
       <article class="movimiento-item">
         <div class="movimiento-top">
-          <span class="movimiento-badge ${claseBadge}">${mov.tipo}</span>
+          <span class="movimiento-badge ${claseBadge}">${tipoVisible}</span>
           <strong class="movimiento-monto ${claseMonto}">${signo}${formatearMoneda(mov.monto)}</strong>
         </div>
 
@@ -1267,6 +1293,8 @@ function editarMovimiento(id) {
 
   editandoId = id;
   tipoInput.value = movimiento.tipo;
+  actualizarUIEgreso();
+  subtipoEgresoInput.value = movimiento.subtipo || "";
   categoriaInput.value = movimiento.categoria;
   descripcionInput.value = movimiento.descripcion;
   montoInput.value = movimiento.monto;
@@ -1306,11 +1334,13 @@ function resetFormulario() {
   btnSubmit.textContent = "Guardar movimiento";
   btnCancelarEdicion.classList.add("hidden");
   colocarFechaActualPorDefecto();
+  actualizarUIEgreso();
 }
 
-function validarFormulario({ tipo, categoria, descripcion, monto, fecha }) {
+function validarFormulario({ tipo, subtipo, categoria, descripcion, monto, fecha }) {
   const errores = [];
   if (!tipo) errores.push("Debes seleccionar el tipo de movimiento.");
+  if (tipo === "egreso" && !subtipo) errores.push("Debes seleccionar si el egreso es gasto o inversión.");
   if (!categoria) errores.push("Debes escribir una categoría.");
   if (categoria.length < 2) errores.push("La categoría debe tener al menos 2 caracteres.");
   if (!descripcion) errores.push("Debes escribir una descripción.");
