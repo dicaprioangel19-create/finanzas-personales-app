@@ -1,3 +1,4 @@
+// app.js
 const STORAGE_KEY = "finanzas_movimientos";
 const BUDGET_STORAGE_KEY = "finanzas_presupuestos";
 const PIN_STORAGE_KEY = "finanzas_pin";
@@ -125,11 +126,11 @@ const menuLinks = document.querySelectorAll(".menu-link");
 const appSections = document.querySelectorAll(".app-section");
 
 function mostrarMenuBoton() {
-  menuToggle.classList.remove("hidden");
+  if (menuToggle) menuToggle.classList.remove("hidden");
 }
 
 function ocultarMenuBoton() {
-  menuToggle.classList.add("hidden");
+  if (menuToggle) menuToggle.classList.add("hidden");
 }
 
 const COLORES_GRAFICO = [
@@ -147,7 +148,6 @@ const COLOR_FONDO_GRAFICO = "#262422";
 
 document.addEventListener("DOMContentLoaded", () => {
   ocultarMenuBoton();
-
   colocarFechaActualPorDefecto();
   inicializarMesPresupuesto();
   configurarSeguridadUI();
@@ -200,11 +200,16 @@ function cerrarMenu() {
 }
 
 function alternarMenu() {
-  if (sideMenu.classList.contains("active")) {
-    cerrarMenu();
-  } else {
-    abrirMenu();
-  }
+  if (!sideMenu) return;
+  if (sideMenu.classList.contains("active")) cerrarMenu();
+  else abrirMenu();
+}
+
+function actualizarMenuActivo(sectionId) {
+  menuLinks.forEach((link) => {
+    const activa = link.dataset.section === sectionId;
+    link.classList.toggle("active", activa);
+  });
 }
 
 function mostrarSeccion(sectionId) {
@@ -215,6 +220,7 @@ function mostrarSeccion(sectionId) {
   const seccionActiva = document.getElementById(sectionId);
   if (seccionActiva) {
     seccionActiva.classList.add("active-section");
+    actualizarMenuActivo(sectionId);
   }
 }
 
@@ -252,6 +258,7 @@ function mostrarModoUnlock() {
   lockSetupGroup.classList.add("hidden");
   appContainer.classList.add("hidden");
   lockScreen.classList.remove("hidden");
+  ocultarMenuBoton();
   limpiarCamposLock();
   lockPin.focus();
 }
@@ -265,6 +272,7 @@ function mostrarModoSetup() {
   lockSetupGroup.classList.remove("hidden");
   appContainer.classList.add("hidden");
   lockScreen.classList.remove("hidden");
+  ocultarMenuBoton();
   limpiarCamposLock();
   lockPinNew.focus();
 }
@@ -274,10 +282,12 @@ function desbloquearApp() {
   appContainer.classList.remove("hidden");
   limpiarCamposLock();
   configurarSeguridadUI();
+  mostrarMenuBoton();
   renderApp();
 }
 
 function bloquearAhora() {
+  cerrarMenu();
   mostrarModoUnlock();
 }
 
@@ -293,17 +303,16 @@ function manejarLockForm(e) {
   e.preventDefault();
 
   if (modoLock === "unlock") {
-  const pin = lockPin.value.trim();
+    const pin = lockPin.value.trim();
 
-  if (pin !== pinGuardado) {
-    mostrarMensajeLock("PIN incorrecto.", "error");
+    if (pin !== pinGuardado) {
+      mostrarMensajeLock("PIN incorrecto.", "error");
+      return;
+    }
+
+    desbloquearApp();
     return;
   }
-
-  desbloquearApp();
-mostrarMenuBoton();
-  return;
-}
 
   const nuevo = lockPinNew.value.trim();
   const confirmar = lockPinConfirm.value.trim();
@@ -790,11 +799,8 @@ function renderSemanaVsFinDeSemana(egresos) {
     const fecha = new Date(`${mov.fechaISO}T00:00:00`);
     const dia = fecha.getDay();
 
-    if (dia === 0 || dia === 6) {
-      totalFinSemana += mov.monto;
-    } else {
-      totalSemana += mov.monto;
-    }
+    if (dia === 0 || dia === 6) totalFinSemana += mov.monto;
+    else totalSemana += mov.monto;
   });
 
   if (totalFinSemana > totalSemana) {
@@ -1048,58 +1054,66 @@ function dibujarGraficoSaldoAcumulado(datos) {
   const maxValor = Math.max(...valores, 0);
   const rango = maxValor - minValor || 1;
 
-  ctxBalance.fillStyle = "#f8fafc";
+  ctxBalance.fillStyle = COLOR_FONDO_GRAFICO;
   ctxBalance.fillRect(0, 0, width, height);
 
-  const lineasGuia = 5;
-  for (let i = 0; i <= lineasGuia; i++) {
-    const valor = maxValor - (rango / lineasGuia) * i;
-    const y = convertirValorAY(valor, minValor, maxValor, paddingTop, chartHeight);
+  dibujarLineasGuiaSaldo({
+    width,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    chartHeight,
+    minValor,
+    maxValor,
+    rango
+  });
 
-    ctxBalance.beginPath();
-    ctxBalance.moveTo(paddingLeft, y);
-    ctxBalance.lineTo(width - paddingRight, y);
-    ctxBalance.strokeStyle = "#e5e7eb";
-    ctxBalance.lineWidth = 1;
-    ctxBalance.stroke();
-
-    ctxBalance.fillStyle = "#64748b";
-    ctxBalance.font = "12px Arial";
-    ctxBalance.textAlign = "right";
-    ctxBalance.textBaseline = "middle";
-    ctxBalance.fillText(formatearMonedaCorta(valor), paddingLeft - 10, y);
-  }
+  dibujarDivisoresMensuales(datos, {
+    width,
+    height,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingBottom,
+    chartWidth
+  });
 
   if (minValor <= 0 && maxValor >= 0) {
     const yCero = convertirValorAY(0, minValor, maxValor, paddingTop, chartHeight);
     ctxBalance.beginPath();
     ctxBalance.moveTo(paddingLeft, yCero);
     ctxBalance.lineTo(width - paddingRight, yCero);
-    ctxBalance.strokeStyle = "#94a3b8";
+    ctxBalance.strokeStyle = COLOR_LINEA_CERO;
     ctxBalance.lineWidth = 1.5;
     ctxBalance.stroke();
   }
 
   const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
-  const cantidadEtiquetas = 6;
-  const pasoEtiquetas = Math.max(1, Math.ceil(datos.length / cantidadEtiquetas));
 
-  datos.forEach((dato, index) => {
-    const esUltimo = index === datos.length - 1;
-    if (index % pasoEtiquetas !== 0 && !esUltimo) return;
-
-    const x = paddingLeft + xStep * index;
-    const y = height - paddingBottom + 20;
-
-    ctxBalance.fillStyle = "#64748b";
-    ctxBalance.font = "12px Arial";
-    ctxBalance.textAlign = "center";
-    ctxBalance.textBaseline = "middle";
-    ctxBalance.fillText(dato.label, x, y);
+  dibujarEtiquetasTiempo(datos, {
+    height,
+    paddingLeft,
+    paddingBottom,
+    xStep
   });
 
-  dibujarTramosSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight });
-  dibujarPuntoFinalSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight });
+  dibujarTramosSaldo(datos, {
+    paddingLeft,
+    xStep,
+    minValor,
+    maxValor,
+    paddingTop,
+    chartHeight
+  });
+
+  dibujarPuntoFinalSaldo(datos, {
+    paddingLeft,
+    xStep,
+    minValor,
+    maxValor,
+    paddingTop,
+    chartHeight
+  });
 }
 
 function dibujarLineasGuiaSaldo({ width, paddingLeft, paddingRight, paddingTop, chartHeight, minValor, maxValor, rango }) {
@@ -1218,6 +1232,108 @@ function convertirValorAY(valor, minValor, maxValor, paddingTop, chartHeight) {
 
 function limpiarCanvasBalance() {
   ctxBalance.clearRect(0, 0, canvasBalance.width, canvasBalance.height);
+}
+
+function activarInteraccionGraficoSaldo(datos) {
+  canvasBalance.onmousemove = (e) => manejarInteraccionGraficoSaldo(e, datos);
+  canvasBalance.ontouchmove = (e) => manejarInteraccionGraficoSaldo(e, datos, true);
+  canvasBalance.onmouseleave = ocultarTooltipGrafico;
+  canvasBalance.ontouchend = ocultarTooltipGrafico;
+}
+
+function manejarInteraccionGraficoSaldo(e, datos, esTouch = false) {
+  if (!datos.length) return;
+
+  if (esTouch) e.preventDefault();
+
+  const rect = canvasBalance.getBoundingClientRect();
+  const punto = esTouch ? e.touches[0] : e;
+
+  const xReal = punto.clientX - rect.left;
+  const escalaX = canvasBalance.width / rect.width;
+  const xCanvas = xReal * escalaX;
+
+  const paddingLeft = 80;
+  const paddingRight = 24;
+  const chartWidth = canvasBalance.width - paddingLeft - paddingRight;
+  const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
+
+  let indiceMasCercano = 0;
+  let distanciaMinima = Infinity;
+
+  datos.forEach((_, index) => {
+    const xPunto = paddingLeft + xStep * index;
+    const distancia = Math.abs(xCanvas - xPunto);
+    if (distancia < distanciaMinima) {
+      distanciaMinima = distancia;
+      indiceMasCercano = index;
+    }
+  });
+
+  const dato = datos[indiceMasCercano];
+  mostrarTooltipGrafico(dato, indiceMasCercano, datos);
+  redibujarGraficoConIndicador(datos, indiceMasCercano);
+}
+
+function redibujarGraficoConIndicador(datos, indiceActivo) {
+  dibujarGraficoSaldoAcumulado(datos);
+
+  const width = canvasBalance.width;
+  const height = canvasBalance.height;
+  const paddingLeft = 80;
+  const paddingRight = 24;
+  const paddingTop = 26;
+  const paddingBottom = 50;
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
+
+  const valores = datos.map((item) => item.saldo);
+  const minValor = Math.min(...valores, 0);
+  const maxValor = Math.max(...valores, 0);
+
+  const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
+  const dato = datos[indiceActivo];
+  const x = paddingLeft + xStep * indiceActivo;
+  const y = convertirValorAY(dato.saldo, minValor, maxValor, paddingTop, chartHeight);
+
+  ctxBalance.beginPath();
+  ctxBalance.arc(x, y, 6, 0, Math.PI * 2);
+  ctxBalance.fillStyle = "#6ea8ff";
+  ctxBalance.fill();
+  ctxBalance.strokeStyle = "#ffffff";
+  ctxBalance.lineWidth = 2;
+  ctxBalance.stroke();
+}
+
+function mostrarTooltipGrafico(dato, indice, datos) {
+  if (!chartTooltip || !chartTooltipDate || !chartTooltipValue) return;
+
+  chartTooltipDate.textContent = formatearFechaHumana(dato.fechaISO);
+  chartTooltipValue.textContent = formatearMoneda(dato.saldo);
+  chartTooltip.classList.add("show");
+
+  const paddingLeft = 80;
+  const paddingRight = 24;
+  const chartWidth = canvasBalance.width - paddingLeft - paddingRight;
+  const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
+  const xCanvas = paddingLeft + xStep * indice;
+
+  const rect = canvasBalance.getBoundingClientRect();
+  const leftVisual = (xCanvas / canvasBalance.width) * rect.width;
+
+  chartTooltip.style.left = `${Math.max(12, Math.min(leftVisual - 50, rect.width - 130))}px`;
+  chartTooltip.style.top = "12px";
+}
+
+function ocultarTooltipGrafico() {
+  if (chartTooltip) {
+    chartTooltip.classList.remove("show");
+  }
+
+  const datos = obtenerDatosSaldoAcumulado(obtenerMovimientosFiltrados());
+  if (datos.length >= 2) {
+    dibujarGraficoSaldoAcumulado(datos);
+  }
 }
 
 // GRÁFICO CIRCULAR
@@ -1356,15 +1472,22 @@ function renderHistorial(lista) {
 
   historyListEl.innerHTML = lista.map((mov) => {
     const esIngreso = mov.tipo === "ingreso";
+    const esInversion = mov.tipo === "egreso" && mov.subtipo === "inversion";
+
     const claseBadge = esIngreso ? "badge-ingreso" : "badge-gasto";
     const claseMonto = esIngreso ? "monto-ingreso" : "monto-gasto";
     const signo = esIngreso ? "+" : "-";
+
+    let claseTipo = "egreso";
+    if (esIngreso) claseTipo = "ingreso";
+    if (esInversion) claseTipo = "inversion";
+
     const tipoVisible = esIngreso
       ? "Ingreso"
       : `Egreso${mov.subtipo ? ` • ${capitalizarTexto(mov.subtipo)}` : ""}`;
 
     return `
-      <article class="movimiento-item">
+      <article class="movimiento-item ${claseTipo}">
         <div class="movimiento-top">
           <span class="movimiento-badge ${claseBadge}">${tipoVisible}</span>
           <strong class="movimiento-monto ${claseMonto}">${signo}${formatearMoneda(mov.monto)}</strong>

@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -182,20 +183,32 @@
               Aún no hay movimientos suficientes para mostrar la línea de saldo acumulado.
             </div>
 
-            <div id="balance-chart-wrapper" class="balance-chart-wrapper">
-              <div class="balance-chart-info">
-                <div class="mini-legend-item">
-                  <span class="mini-legend-color mini-legend-balance"></span>
-                  <span>Línea de saldo</span>
+            <div id="balance-chart-wrapper" class="balance-chart-wrapper chart-card">
+              <div class="chart-header">
+                <div class="chart-balance">
+                  <span class="chart-balance-label">Saldo actual</span>
+                  <strong id="saldo-actual-grafico" class="chart-balance-value">S/ 0.00</strong>
                 </div>
-                <div class="mini-legend-item">
-                  <span class="mini-legend-color mini-legend-drop"></span>
-                  <span>Tramo de bajada por egreso</span>
+
+                <div class="balance-chart-info">
+                  <div class="mini-legend-item">
+                    <span class="mini-legend-color mini-legend-balance"></span>
+                    <span>Línea de saldo</span>
+                  </div>
+                  <div class="mini-legend-item">
+                    <span class="mini-legend-color mini-legend-drop"></span>
+                    <span>Tramo de bajada por egreso</span>
+                  </div>
                 </div>
               </div>
 
               <div class="line-canvas-box">
                 <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
+
+                <div id="chart-tooltip" class="chart-tooltip">
+                  <div id="chart-tooltip-date" class="chart-tooltip-date"></div>
+                  <div id="chart-tooltip-value" class="chart-tooltip-value"></div>
+                </div>
               </div>
             </div>
           </div>
