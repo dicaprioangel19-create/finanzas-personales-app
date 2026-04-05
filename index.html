@@ -106,13 +106,35 @@
               </div>
 
               <div class="line-canvas-box">
-                <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
+  <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
 
-                <div id="chart-tooltip" class="chart-tooltip">
-                  <div id="chart-tooltip-date" class="chart-tooltip-date"></div>
-                  <div id="chart-tooltip-value" class="chart-tooltip-value"></div>
-                </div>
-              </div>
+  <div id="chart-tooltip" class="chart-tooltip">
+    <div id="chart-tooltip-date" class="chart-tooltip-date"></div>
+    <div id="chart-tooltip-value" class="chart-tooltip-value"></div>
+  </div>
+</div>
+
+<div id="chart-range-nav" class="chart-range-nav">
+  <canvas id="grafico-saldo-navigator" width="980" height="90"></canvas>
+
+  <div id="range-selection" class="range-selection">
+    <button
+      id="range-handle-left"
+      class="range-handle range-handle-left"
+      type="button"
+      aria-label="Ajustar inicio"
+    ></button>
+
+    <div id="range-drag-area" class="range-drag-area"></div>
+
+    <button
+      id="range-handle-right"
+      class="range-handle range-handle-right"
+      type="button"
+      aria-label="Ajustar fin"
+    ></button>
+  </div>
+</div>
             </div>
           </div>
 

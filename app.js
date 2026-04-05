@@ -128,6 +128,14 @@ const chartTooltip = document.getElementById("chart-tooltip");
 const chartTooltipDate = document.getElementById("chart-tooltip-date");
 const chartTooltipValue = document.getElementById("chart-tooltip-value");
 
+const canvasNavigator = document.getElementById("grafico-saldo-navigator");
+const ctxNavigator = canvasNavigator.getContext("2d");
+const chartRangeNav = document.getElementById("chart-range-nav");
+const rangeSelection = document.getElementById("range-selection");
+const rangeHandleLeft = document.getElementById("range-handle-left");
+const rangeHandleRight = document.getElementById("range-handle-right");
+const rangeDragArea = document.getElementById("range-drag-area");
+
 // MENÚ
 const menuToggle = document.getElementById("menu-toggle");
 const sideMenu = document.getElementById("side-menu");
@@ -147,6 +155,19 @@ const COLOR_LINEA_GUIA = "rgba(178, 167, 154, 0.14)";
 const COLOR_LINEA_CERO = "rgba(200, 155, 90, 0.28)";
 const COLOR_MES_DIVISOR = "rgba(255, 255, 255, 0.08)";
 const COLOR_FONDO_GRAFICO = "#262422";
+
+let chartRange = {
+  start: 0,
+  end: 0
+};
+
+let chartRangeInteraction = {
+  active: false,
+  mode: "",
+  startX: 0,
+  startStart: 0,
+  startEnd: 0
+};
 
 const MAPA_SUGERENCIAS = {
   comida: ["pollo", "restaurante", "almuerzo", "desayuno", "cena", "mercado", "snack", "pan", "fruta", "verdura"],
@@ -1096,11 +1117,12 @@ function obtenerMesAnterior(mesISO) {
 // GRÁFICO SALDO
 function renderGraficoSaldoAcumulado(lista) {
   limpiarCanvasBalance();
+  limpiarCanvasNavigator();
   ocultarTooltipGrafico();
 
-  const datos = obtenerDatosSaldoAcumulado(lista);
+  const datosCompletos = obtenerDatosSaldoAcumulado(lista);
 
-  if (datos.length < 2) {
+  if (datosCompletos.length < 2) {
     balanceChartWrapper.classList.add("hidden");
     balanceChartEmptyState.classList.remove("hidden");
     saldoActualGraficoEl.textContent = "S/ 0.00";
@@ -1109,10 +1131,96 @@ function renderGraficoSaldoAcumulado(lista) {
 
   balanceChartWrapper.classList.remove("hidden");
   balanceChartEmptyState.classList.add("hidden");
-  saldoActualGraficoEl.textContent = formatearMoneda(datos[datos.length - 1].saldo);
+  saldoActualGraficoEl.textContent = formatearMoneda(datosCompletos[datosCompletos.length - 1].saldo);
 
-  dibujarGraficoSaldoAcumulado(datos);
-  activarInteraccionGraficoSaldo(datos);
+  inicializarRangoGrafico(datosCompletos);
+  const datosVisibles = obtenerDatosVisiblesGrafico(datosCompletos);
+
+  dibujarGraficoSaldoAcumulado(datosVisibles);
+  activarInteraccionGraficoSaldo(datosVisibles);
+
+  dibujarNavigatorSaldo(datosCompletos);
+  actualizarUIRangoGrafico(datosCompletos);
+}
+
+function inicializarRangoGrafico(datos) {
+  const maxIndex = datos.length - 1;
+
+  if (chartRange.end === 0 || chartRange.end > maxIndex) {
+    const ventanaInicial = Math.min(8, datos.length - 1);
+    chartRange.end = maxIndex;
+    chartRange.start = Math.max(0, maxIndex - ventanaInicial);
+  }
+
+  if (chartRange.start < 0) chartRange.start = 0;
+  if (chartRange.end > maxIndex) chartRange.end = maxIndex;
+
+  if (chartRange.start >= chartRange.end) {
+    chartRange.start = Math.max(0, chartRange.end - 1);
+  }
+}
+
+function obtenerDatosVisiblesGrafico(datos) {
+  return datos.slice(chartRange.start, chartRange.end + 1);
+}
+
+function limpiarCanvasNavigator() {
+  ctxNavigator.clearRect(0, 0, canvasNavigator.width, canvasNavigator.height);
+}
+
+function dibujarNavigatorSaldo(datos) {
+  const width = canvasNavigator.width;
+  const height = canvasNavigator.height;
+
+  const paddingX = 16;
+  const paddingY = 12;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+
+  const valores = datos.map((item) => item.saldo);
+  const minValor = Math.min(...valores, 0);
+  const maxValor = Math.max(...valores, 0);
+  const rango = maxValor - minValor || 1;
+  const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
+
+  ctxNavigator.fillStyle = "#1f1d1b";
+  ctxNavigator.fillRect(0, 0, width, height);
+
+  ctxNavigator.beginPath();
+
+  datos.forEach((dato, index) => {
+    const x = paddingX + xStep * index;
+    const y = paddingY + ((maxValor - dato.saldo) / rango) * chartHeight;
+
+    if (index === 0) ctxNavigator.moveTo(x, y);
+    else ctxNavigator.lineTo(x, y);
+  });
+
+  ctxNavigator.strokeStyle = "#5b8def";
+  ctxNavigator.lineWidth = 2;
+  ctxNavigator.lineJoin = "round";
+  ctxNavigator.lineCap = "round";
+  ctxNavigator.stroke();
+
+  const yCero = paddingY + ((maxValor - 0) / rango) * chartHeight;
+  ctxNavigator.beginPath();
+  ctxNavigator.moveTo(paddingX, yCero);
+  ctxNavigator.lineTo(width - paddingX, yCero);
+  ctxNavigator.strokeStyle = "rgba(200, 155, 90, 0.25)";
+  ctxNavigator.lineWidth = 1;
+  ctxNavigator.stroke();
+}
+
+function actualizarUIRangoGrafico(datos) {
+  const total = datos.length;
+  if (total <= 1) return;
+
+  const leftPercent = (chartRange.start / (total - 1)) * 100;
+  const rightPercent = (chartRange.end / (total - 1)) * 100;
+  const widthPercent = rightPercent - leftPercent;
+
+  rangeSelection.style.left = `${leftPercent}%`;
+  rangeSelection.style.width = `${Math.max(widthPercent, 8)}%`;
 }
 
 function obtenerDatosSaldoAcumulado(lista) {
