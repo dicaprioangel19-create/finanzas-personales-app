@@ -1,4 +1,3 @@
-// app.js
 const STORAGE_KEY = "finanzas_movimientos";
 const BUDGET_STORAGE_KEY = "finanzas_presupuestos";
 const PIN_STORAGE_KEY = "finanzas_pin";
@@ -35,11 +34,22 @@ const fechaInput = document.getElementById("fecha");
 const btnSubmit = document.getElementById("btn-submit");
 const btnCancelarEdicion = document.getElementById("btn-cancelar-edicion");
 const mensaje = document.getElementById("mensaje");
+const modalTitle = document.getElementById("modal-title");
+const hintCategoria = document.getElementById("hint-categoria");
+const hintDescripcion = document.getElementById("hint-descripcion");
+
+// MODAL / FAB / TOAST
+const modalOverlay = document.getElementById("modal-overlay");
+const btnCloseModal = document.getElementById("btn-close-modal");
+const btnOpenModalTop = document.getElementById("btn-open-modal-top");
+const fabOpenModal = document.getElementById("fab-open-modal");
+const toastEl = document.getElementById("toast");
 
 // FILTROS
 const filtroTipo = document.getElementById("filtro-tipo");
 const filtroMes = document.getElementById("filtro-mes");
 const btnLimpiarFiltros = document.getElementById("btn-limpiar-filtros");
+const btnExportarCSV = document.getElementById("btn-exportar-csv");
 
 // DASHBOARD
 const totalIngresosEl = document.getElementById("total-ingresos");
@@ -108,7 +118,7 @@ const chartWrapper = document.getElementById("chart-wrapper");
 const chartLegend = document.getElementById("chart-legend");
 const chartEmptyState = document.getElementById("chart-empty-state");
 
-// GRÁFICO SALDO ACUMULADO
+// GRÁFICO SALDO
 const canvasBalance = document.getElementById("grafico-saldo-acumulado");
 const ctxBalance = canvasBalance.getContext("2d");
 const balanceChartWrapper = document.getElementById("balance-chart-wrapper");
@@ -125,14 +135,6 @@ const menuOverlay = document.getElementById("menu-overlay");
 const menuLinks = document.querySelectorAll(".menu-link");
 const appSections = document.querySelectorAll(".app-section");
 
-function mostrarMenuBoton() {
-  if (menuToggle) menuToggle.classList.remove("hidden");
-}
-
-function ocultarMenuBoton() {
-  if (menuToggle) menuToggle.classList.add("hidden");
-}
-
 const COLORES_GRAFICO = [
   "#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2",
   "#ea580c", "#4f46e5", "#65a30d", "#db2777", "#0f766e", "#9333ea"
@@ -146,6 +148,16 @@ const COLOR_LINEA_CERO = "rgba(200, 155, 90, 0.28)";
 const COLOR_MES_DIVISOR = "rgba(255, 255, 255, 0.08)";
 const COLOR_FONDO_GRAFICO = "#262422";
 
+const MAPA_SUGERENCIAS = {
+  comida: ["pollo", "restaurante", "almuerzo", "desayuno", "cena", "mercado", "snack", "pan", "fruta", "verdura"],
+  transporte: ["uber", "taxi", "bus", "pasaje", "peaje", "combustible", "gasolina", "moto"],
+  educación: ["curso", "libro", "matricula", "colegiatura", "universidad", "senati", "clase"],
+  salud: ["farmacia", "doctor", "consulta", "medicina", "ibuprofeno", "vitamina", "análisis"],
+  hogar: ["alquiler", "luz", "agua", "internet", "gas", "mueble", "limpieza"],
+  trabajo: ["cliente", "software", "herramienta", "dominio", "hosting", "canva", "office"],
+  inversión: ["curso", "libro", "equipo", "herramienta", "dominio", "hosting", "capacitación", "formación"]
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   ocultarMenuBoton();
   colocarFechaActualPorDefecto();
@@ -154,12 +166,15 @@ document.addEventListener("DOMContentLoaded", () => {
   iniciarSistemaPIN();
   actualizarUIEgreso();
   mostrarSeccion("registro");
+  cerrarModal();
 });
 
+// Eventos base
 lockForm.addEventListener("submit", manejarLockForm);
 form.addEventListener("submit", manejarSubmitFormulario);
 btnCancelarEdicion.addEventListener("click", cancelarEdicion);
 tipoInput.addEventListener("change", actualizarUIEgreso);
+descripcionInput.addEventListener("input", procesarSugerenciasInteligentes);
 
 securityForm.addEventListener("submit", manejarGuardarPin);
 btnDeletePin.addEventListener("click", manejarEliminarPin);
@@ -184,9 +199,34 @@ btnLimpiarFiltros.addEventListener("click", () => {
   sincronizarMesPresupuestoConFiltro();
   renderApp();
   mostrarMensaje("Filtros limpiados correctamente.", "success");
+  mostrarToast("Filtros limpiados", "success");
+});
+
+btnExportarCSV.addEventListener("click", exportarMovimientosCSV);
+
+btnOpenModalTop.addEventListener("click", abrirModalNuevoMovimiento);
+fabOpenModal.addEventListener("click", abrirModalNuevoMovimiento);
+btnCloseModal.addEventListener("click", cerrarModal);
+modalOverlay.addEventListener("click", (e) => {
+  if (e.target === modalOverlay) cerrarModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    cerrarModal();
+    cerrarMenu();
+  }
 });
 
 // MENÚ
+function mostrarMenuBoton() {
+  if (menuToggle) menuToggle.classList.remove("hidden");
+}
+
+function ocultarMenuBoton() {
+  if (menuToggle) menuToggle.classList.add("hidden");
+}
+
 function abrirMenu() {
   if (sideMenu) sideMenu.classList.add("active");
   if (menuOverlay) menuOverlay.classList.add("active");
@@ -196,7 +236,7 @@ function abrirMenu() {
 function cerrarMenu() {
   if (sideMenu) sideMenu.classList.remove("active");
   if (menuOverlay) menuOverlay.classList.remove("active");
-  if (menuToggle) menuToggle.classList.remove("hidden");
+  if (menuToggle && !appContainer.classList.contains("hidden")) menuToggle.classList.remove("hidden");
 }
 
 function alternarMenu() {
@@ -207,8 +247,7 @@ function alternarMenu() {
 
 function actualizarMenuActivo(sectionId) {
   menuLinks.forEach((link) => {
-    const activa = link.dataset.section === sectionId;
-    link.classList.toggle("active", activa);
+    link.classList.toggle("active", link.dataset.section === sectionId);
   });
 }
 
@@ -240,13 +279,41 @@ menuLinks.forEach((link) => {
   });
 });
 
+// MODAL
+function abrirModalNuevoMovimiento() {
+  modalOverlay.classList.remove("hidden");
+  modalTitle.textContent = editandoId ? "Editar movimiento" : "Nuevo movimiento";
+  document.body.style.overflow = "hidden";
+  setTimeout(() => {
+    tipoInput.focus();
+  }, 50);
+}
+
+function cerrarModal() {
+  modalOverlay.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function vibrarSuave() {
+  if ("vibrate" in navigator) {
+    navigator.vibrate(10);
+  }
+}
+
+function mostrarToast(texto, tipo = "success") {
+  toastEl.textContent = texto;
+  toastEl.className = `toast show ${tipo}`;
+
+  clearTimeout(mostrarToast.timeoutId);
+  mostrarToast.timeoutId = setTimeout(() => {
+    toastEl.className = "toast";
+  }, 2300);
+}
+
 // PIN
 function iniciarSistemaPIN() {
-  if (pinGuardado) {
-    mostrarModoUnlock();
-  } else {
-    mostrarModoSetup();
-  }
+  if (pinGuardado) mostrarModoUnlock();
+  else mostrarModoSetup();
 }
 
 function mostrarModoUnlock() {
@@ -307,6 +374,7 @@ function manejarLockForm(e) {
 
     if (pin !== pinGuardado) {
       mostrarMensajeLock("PIN incorrecto.", "error");
+      mostrarToast("PIN incorrecto", "error");
       return;
     }
 
@@ -320,22 +388,20 @@ function manejarLockForm(e) {
 
   if (error) {
     mostrarMensajeLock(error, "error");
+    mostrarToast(error, "error");
     return;
   }
 
   pinGuardado = nuevo;
   localStorage.setItem(PIN_STORAGE_KEY, pinGuardado);
   mostrarMensajeLock("PIN configurado correctamente.", "success");
+  mostrarToast("PIN configurado", "success");
   setTimeout(() => desbloquearApp(), 500);
 }
 
 function validarPinNuevo(nuevo, confirmar) {
-  if (!/^\d{4}$/.test(nuevo)) {
-    return "El PIN debe tener exactamente 4 dígitos numéricos.";
-  }
-  if (nuevo !== confirmar) {
-    return "La confirmación del PIN no coincide.";
-  }
+  if (!/^\d{4}$/.test(nuevo)) return "El PIN debe tener exactamente 4 dígitos numéricos.";
+  if (nuevo !== confirmar) return "La confirmación del PIN no coincide.";
   return "";
 }
 
@@ -367,12 +433,14 @@ function manejarGuardarPin(e) {
 
   if (existePin && actual !== pinGuardado) {
     mostrarMensajeSeguridad("El PIN actual es incorrecto.", "error");
+    mostrarToast("PIN actual incorrecto", "error");
     return;
   }
 
   const error = validarPinNuevo(nuevo, confirmar);
   if (error) {
     mostrarMensajeSeguridad(error, "error");
+    mostrarToast(error, "error");
     return;
   }
 
@@ -380,6 +448,7 @@ function manejarGuardarPin(e) {
   localStorage.setItem(PIN_STORAGE_KEY, pinGuardado);
   configurarSeguridadUI();
   mostrarMensajeSeguridad(existePin ? "PIN actualizado correctamente." : "PIN configurado correctamente.", "success");
+  mostrarToast(existePin ? "PIN actualizado" : "PIN configurado", "success");
 }
 
 function manejarEliminarPin() {
@@ -399,6 +468,7 @@ function manejarEliminarPin() {
   localStorage.removeItem(PIN_STORAGE_KEY);
   configurarSeguridadUI();
   mostrarMensajeSeguridad("PIN eliminado correctamente.", "success");
+  mostrarToast("PIN eliminado", "success");
 }
 
 function limpiarCamposSeguridad() {
@@ -428,6 +498,53 @@ function actualizarUIEgreso() {
   }
 }
 
+function procesarSugerenciasInteligentes() {
+  const texto = descripcionInput.value.trim().toLowerCase();
+
+  if (!texto) {
+    hintCategoria.textContent = "";
+    hintDescripcion.textContent = "";
+    return;
+  }
+
+  const sugerenciaCategoria = detectarCategoriaPorDescripcion(texto);
+  const sugerenciaSubtipo = detectarSubtipoEgresoPorDescripcion(texto);
+
+  if (!categoriaInput.value.trim() && sugerenciaCategoria) {
+    categoriaInput.value = capitalizarTexto(sugerenciaCategoria);
+    hintCategoria.textContent = `Sugerencia automática: ${capitalizarTexto(sugerenciaCategoria)}`;
+  } else {
+    hintCategoria.textContent = sugerenciaCategoria
+      ? `Coincide con: ${capitalizarTexto(sugerenciaCategoria)}`
+      : "";
+  }
+
+  if (tipoInput.value === "egreso" && sugerenciaSubtipo) {
+    subtipoEgresoInput.value = sugerenciaSubtipo;
+    hintDescripcion.textContent = `Sugerencia: esto parece ${sugerenciaSubtipo === "inversion" ? "inversión" : "gasto"}.`;
+  } else {
+    hintDescripcion.textContent = "";
+  }
+}
+
+function detectarCategoriaPorDescripcion(texto) {
+  for (const [categoria, palabras] of Object.entries(MAPA_SUGERENCIAS)) {
+    if (categoria === "inversión") continue;
+    if (palabras.some((palabra) => texto.includes(palabra))) {
+      return categoria;
+    }
+  }
+  return "";
+}
+
+function detectarSubtipoEgresoPorDescripcion(texto) {
+  const palabrasInversion = MAPA_SUGERENCIAS["inversión"] || [];
+  if (palabrasInversion.some((palabra) => texto.includes(palabra))) {
+    return "inversion";
+  }
+  return "gasto";
+}
+
 function manejarSubmitFormulario(e) {
   e.preventDefault();
 
@@ -441,6 +558,7 @@ function manejarSubmitFormulario(e) {
   const errores = validarFormulario({ tipo, subtipo, categoria, descripcion, monto, fecha });
   if (errores.length > 0) {
     mostrarMensaje(errores[0], "error");
+    mostrarToast(errores[0], "error");
     return;
   }
 
@@ -451,6 +569,7 @@ function manejarSubmitFormulario(e) {
 
     if (index === -1) {
       mostrarMensaje("No se encontró el movimiento a editar.", "error");
+      mostrarToast("No se encontró el movimiento", "error");
       return;
     }
 
@@ -469,7 +588,10 @@ function manejarSubmitFormulario(e) {
     guardarMovimientos();
     renderApp();
     resetFormulario();
+    cerrarModal();
     mostrarMensaje("Movimiento actualizado correctamente.", "success");
+    mostrarToast("Movimiento actualizado", "success");
+    vibrarSuave();
     return;
   }
 
@@ -488,7 +610,10 @@ function manejarSubmitFormulario(e) {
   guardarMovimientos();
   renderApp();
   resetFormulario();
+  cerrarModal();
   mostrarMensaje("Movimiento guardado correctamente.", "success");
+  mostrarToast("Movimiento guardado", "success");
+  vibrarSuave();
 }
 
 function renderApp() {
@@ -541,11 +666,13 @@ function manejarSubmitPresupuesto(e) {
 
   if (!mes) {
     mostrarMensajePresupuesto("Debes seleccionar el mes del presupuesto.", "error");
+    mostrarToast("Selecciona un mes", "error");
     return;
   }
 
   if (!monto || isNaN(monto) || monto <= 0) {
     mostrarMensajePresupuesto("El presupuesto debe ser mayor que 0.", "error");
+    mostrarToast("El presupuesto debe ser mayor que 0", "error");
     return;
   }
 
@@ -553,6 +680,7 @@ function manejarSubmitPresupuesto(e) {
   guardarPresupuestos();
   renderApp();
   mostrarMensajePresupuesto("Presupuesto guardado correctamente.", "success");
+  mostrarToast("Presupuesto guardado", "success");
 }
 
 function eliminarPresupuestoMesActual() {
@@ -569,6 +697,7 @@ function eliminarPresupuestoMesActual() {
   guardarPresupuestos();
   renderApp();
   mostrarMensajePresupuesto("Presupuesto eliminado correctamente.", "success");
+  mostrarToast("Presupuesto eliminado", "success");
 }
 
 function renderPresupuestoMensual() {
@@ -964,7 +1093,7 @@ function obtenerMesAnterior(mesISO) {
   return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
 }
 
-// SALDO ACUMULADO
+// GRÁFICO SALDO
 function renderGraficoSaldoAcumulado(lista) {
   limpiarCanvasBalance();
   ocultarTooltipGrafico();
@@ -974,21 +1103,13 @@ function renderGraficoSaldoAcumulado(lista) {
   if (datos.length < 2) {
     balanceChartWrapper.classList.add("hidden");
     balanceChartEmptyState.classList.remove("hidden");
-
-    if (saldoActualGraficoEl) {
-      saldoActualGraficoEl.textContent = "S/ 0.00";
-    }
-
+    saldoActualGraficoEl.textContent = "S/ 0.00";
     return;
   }
 
   balanceChartWrapper.classList.remove("hidden");
   balanceChartEmptyState.classList.add("hidden");
-
-  const ultimoSaldo = datos[datos.length - 1].saldo;
-  if (saldoActualGraficoEl) {
-    saldoActualGraficoEl.textContent = formatearMoneda(ultimoSaldo);
-  }
+  saldoActualGraficoEl.textContent = formatearMoneda(datos[datos.length - 1].saldo);
 
   dibujarGraficoSaldoAcumulado(datos);
   activarInteraccionGraficoSaldo(datos);
@@ -1138,9 +1259,8 @@ function dibujarLineasGuiaSaldo({ width, paddingLeft, paddingRight, paddingTop, 
   }
 }
 
-function dibujarDivisoresMensuales(datos, { width, height, paddingLeft, paddingRight, paddingTop, paddingBottom, chartWidth }) {
+function dibujarDivisoresMensuales(datos, { height, paddingLeft, paddingBottom, paddingTop, chartWidth }) {
   if (datos.length < 2) return;
-
   const xStep = chartWidth / (datos.length - 1);
 
   for (let i = 1; i < datos.length; i++) {
@@ -1149,7 +1269,6 @@ function dibujarDivisoresMensuales(datos, { width, height, paddingLeft, paddingR
 
     if (mesActual !== mesAnterior) {
       const x = paddingLeft + xStep * i;
-
       ctxBalance.beginPath();
       ctxBalance.moveTo(x, paddingTop);
       ctxBalance.lineTo(x, height - paddingBottom);
@@ -1243,7 +1362,6 @@ function activarInteraccionGraficoSaldo(datos) {
 
 function manejarInteraccionGraficoSaldo(e, datos, esTouch = false) {
   if (!datos.length) return;
-
   if (esTouch) e.preventDefault();
 
   const rect = canvasBalance.getBoundingClientRect();
@@ -1279,13 +1397,12 @@ function redibujarGraficoConIndicador(datos, indiceActivo) {
   dibujarGraficoSaldoAcumulado(datos);
 
   const width = canvasBalance.width;
-  const height = canvasBalance.height;
   const paddingLeft = 80;
   const paddingRight = 24;
   const paddingTop = 26;
   const paddingBottom = 50;
   const chartWidth = width - paddingLeft - paddingRight;
-  const chartHeight = height - paddingTop - paddingBottom;
+  const chartHeight = canvasBalance.height - paddingTop - paddingBottom;
 
   const valores = datos.map((item) => item.saldo);
   const minValor = Math.min(...valores, 0);
@@ -1306,8 +1423,6 @@ function redibujarGraficoConIndicador(datos, indiceActivo) {
 }
 
 function mostrarTooltipGrafico(dato, indice, datos) {
-  if (!chartTooltip || !chartTooltipDate || !chartTooltipValue) return;
-
   chartTooltipDate.textContent = formatearFechaHumana(dato.fechaISO);
   chartTooltipValue.textContent = formatearMoneda(dato.saldo);
   chartTooltip.classList.add("show");
@@ -1326,14 +1441,9 @@ function mostrarTooltipGrafico(dato, indice, datos) {
 }
 
 function ocultarTooltipGrafico() {
-  if (chartTooltip) {
-    chartTooltip.classList.remove("show");
-  }
-
+  chartTooltip.classList.remove("show");
   const datos = obtenerDatosSaldoAcumulado(obtenerMovimientosFiltrados());
-  if (datos.length >= 2) {
-    dibujarGraficoSaldoAcumulado(datos);
-  }
+  if (datos.length >= 2) dibujarGraficoSaldoAcumulado(datos);
 }
 
 // GRÁFICO CIRCULAR
@@ -1474,8 +1584,8 @@ function renderHistorial(lista) {
     const esIngreso = mov.tipo === "ingreso";
     const esInversion = mov.tipo === "egreso" && mov.subtipo === "inversion";
 
-    const claseBadge = esIngreso ? "badge-ingreso" : "badge-gasto";
-    const claseMonto = esIngreso ? "monto-ingreso" : "monto-gasto";
+    const claseBadge = esIngreso ? "badge-ingreso" : esInversion ? "badge-inversion" : "badge-gasto";
+    const claseMonto = esIngreso ? "monto-ingreso" : esInversion ? "monto-inversion" : "monto-gasto";
     const signo = esIngreso ? "+" : "-";
 
     let claseTipo = "egreso";
@@ -1513,6 +1623,7 @@ function editarMovimiento(id) {
   const movimiento = movimientos.find((mov) => mov.id === id);
   if (!movimiento) {
     mostrarMensaje("No se encontró el movimiento.", "error");
+    mostrarToast("No se encontró el movimiento", "error");
     return;
   }
 
@@ -1527,10 +1638,10 @@ function editarMovimiento(id) {
 
   btnSubmit.textContent = "Guardar cambios";
   btnCancelarEdicion.classList.remove("hidden");
+  modalTitle.textContent = "Editar movimiento";
 
   mostrarMensaje("Estás editando un movimiento.", "success");
-  mostrarSeccion("registro");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  abrirModalNuevoMovimiento();
 }
 
 function eliminarMovimiento(id) {
@@ -1545,11 +1656,51 @@ function eliminarMovimiento(id) {
   guardarMovimientos();
   renderApp();
   mostrarMensaje("Movimiento eliminado correctamente.", "success");
+  mostrarToast("Movimiento eliminado", "success");
 }
 
 function cancelarEdicion() {
   resetFormulario();
+  cerrarModal();
   mostrarMensaje("Edición cancelada.", "success");
+  mostrarToast("Edición cancelada", "success");
+}
+
+// EXPORTAR
+function exportarMovimientosCSV() {
+  const lista = obtenerMovimientosFiltrados();
+
+  if (lista.length === 0) {
+    mostrarToast("No hay movimientos para exportar", "error");
+    return;
+  }
+
+  const encabezados = ["id", "tipo", "subtipo", "categoria", "descripcion", "monto", "fecha", "hora", "fechaISO"];
+  const filas = lista.map((mov) => [
+    mov.id,
+    mov.tipo,
+    mov.subtipo || "",
+    mov.categoria,
+    mov.descripcion,
+    mov.monto,
+    mov.fecha,
+    mov.hora,
+    mov.fechaISO
+  ]);
+
+  const csv = [encabezados, ...filas]
+    .map((fila) => fila.map((valor) => `"${String(valor).replaceAll('"', '""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = `movimientos-finanzas-${obtenerFechaInput(new Date())}.csv`;
+  enlace.click();
+  URL.revokeObjectURL(url);
+
+  mostrarToast("CSV exportado", "success");
 }
 
 // UTILIDADES
@@ -1558,8 +1709,11 @@ function resetFormulario() {
   editandoId = null;
   btnSubmit.textContent = "Guardar movimiento";
   btnCancelarEdicion.classList.add("hidden");
+  modalTitle.textContent = "Nuevo movimiento";
   colocarFechaActualPorDefecto();
   actualizarUIEgreso();
+  hintCategoria.textContent = "";
+  hintDescripcion.textContent = "";
 }
 
 function validarFormulario({ tipo, subtipo, categoria, descripcion, monto, fecha }) {

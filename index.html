@@ -1,21 +1,15 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Finanzas Personales</title>
-
   <link rel="icon" href="./icon-192.png" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
-    ☰
-  </button>
-
+  <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">☰</button>
   <div id="menu-overlay" class="menu-overlay"></div>
 
   <aside id="side-menu" class="side-menu">
@@ -34,53 +28,28 @@
   <div id="lock-screen" class="lock-screen">
     <div class="lock-card">
       <h2 id="lock-title" class="lock-title">Desbloquear app</h2>
-      <p id="lock-description" class="lock-description">
-        Ingresa tu PIN para acceder a tus finanzas.
-      </p>
+      <p id="lock-description" class="lock-description">Ingresa tu PIN para acceder a tus finanzas.</p>
 
       <form id="lock-form" novalidate>
         <div id="lock-unlock-group" class="field">
           <label for="lock-pin">PIN</label>
-          <input
-            id="lock-pin"
-            type="password"
-            inputmode="numeric"
-            maxlength="4"
-            placeholder="1234"
-            autocomplete="off"
-          />
+          <input id="lock-pin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
         </div>
 
         <div id="lock-setup-group" class="lock-setup-group hidden">
           <div class="field">
             <label for="lock-pin-new">Nuevo PIN</label>
-            <input
-              id="lock-pin-new"
-              type="password"
-              inputmode="numeric"
-              maxlength="4"
-              placeholder="1234"
-              autocomplete="off"
-            />
+            <input id="lock-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
           </div>
 
           <div class="field">
             <label for="lock-pin-confirm">Confirmar PIN</label>
-            <input
-              id="lock-pin-confirm"
-              type="password"
-              inputmode="numeric"
-              maxlength="4"
-              placeholder="1234"
-              autocomplete="off"
-            />
+            <input id="lock-pin-confirm" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
           </div>
         </div>
 
         <div class="lock-actions">
-          <button id="lock-submit" type="submit" class="btn btn-primary">
-            Ingresar
-          </button>
+          <button id="lock-submit" type="submit" class="btn btn-primary">Ingresar</button>
         </div>
 
         <p id="lock-message" class="mensaje"></p>
@@ -92,90 +61,24 @@
     <div class="app">
       <header class="app-header">
         <h1>Finanzas Personales</h1>
-        <p class="subtitle">Controla tus ingresos y egresos desde una PWA ligera</p>
+        <p class="subtitle">Controla tus ingresos, egresos e inversión desde una PWA ligera</p>
       </header>
 
       <main class="main-grid">
         <section id="registro" class="app-section card">
-          <h2 class="section-title">Registrar movimiento</h2>
-
-          <form id="form-movimiento" novalidate>
-            <div class="form-grid">
-              <div class="field">
-                <label for="tipo">Tipo</label>
-                <select id="tipo" required>
-                  <option value="">Selecciona</option>
-                  <option value="ingreso">Ingreso</option>
-                  <option value="egreso">Egreso</option>
-                </select>
-              </div>
-
-              <div id="subtipo-egreso-group" class="field hidden">
-                <label for="subtipo-egreso">Clase de egreso</label>
-                <select id="subtipo-egreso">
-                  <option value="">Selecciona</option>
-                  <option value="gasto">Gasto</option>
-                  <option value="inversion">Inversión</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="categoria">Categoría</label>
-                <input
-                  id="categoria"
-                  type="text"
-                  placeholder="Ej: Comida, Transporte, Educación"
-                  maxlength="40"
-                  required
-                />
-              </div>
-
-              <div class="field field-full">
-                <label for="descripcion">Descripción</label>
-                <input
-                  id="descripcion"
-                  type="text"
-                  placeholder="Ej: Compra de mercado"
-                  maxlength="80"
-                  required
-                />
-              </div>
-
-              <div class="field">
-                <label for="monto">Monto</label>
-                <input
-                  id="monto"
-                  type="number"
-                  placeholder="0.00"
-                  step="0.01"
-                  min="0.01"
-                  required
-                />
-              </div>
-
-              <div class="field">
-                <label for="fecha">Fecha</label>
-                <input id="fecha" type="date" required />
-              </div>
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Registrar movimiento</h2>
+              <p class="section-note">Usa el botón flotante para abrir el formulario rápido</p>
             </div>
-
-            <div class="form-actions">
-              <button type="submit" id="btn-submit" class="btn btn-primary">
-                Guardar movimiento
-              </button>
-              <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary hidden">
-                Cancelar edición
-              </button>
-            </div>
-
-            <p id="mensaje" class="mensaje"></p>
-          </form>
+            <button id="btn-open-modal-top" type="button" class="btn btn-primary">Nuevo movimiento</button>
+          </div>
 
           <div class="inner-section card">
             <div class="section-header">
               <div>
                 <h2 class="section-title">Saldo acumulado</h2>
-                <p class="section-note">Una sola línea: sube con ingresos, baja con egresos y se mantiene cuando no hay cambios</p>
+                <p class="section-note">Sube con ingresos, baja con egresos y muestra tu evolución diaria</p>
               </div>
             </div>
 
@@ -197,7 +100,7 @@
                   </div>
                   <div class="mini-legend-item">
                     <span class="mini-legend-color mini-legend-drop"></span>
-                    <span>Tramo de bajada por egreso</span>
+                    <span>Tramo de bajada</span>
                   </div>
                 </div>
               </div>
@@ -216,7 +119,10 @@
           <div class="inner-section card history-card">
             <div class="history-header">
               <h2 class="section-title">Historial</h2>
-              <span id="contador-movimientos" class="history-count">0 movimientos</span>
+              <div class="history-header-actions">
+                <span id="contador-movimientos" class="history-count">0 movimientos</span>
+                <button id="btn-exportar-csv" type="button" class="btn btn-secondary">Exportar CSV</button>
+              </div>
             </div>
 
             <div id="history-list" class="history-list"></div>
@@ -263,9 +169,7 @@
 
               <div class="field filter-action">
                 <label class="label-invisible">Acción</label>
-                <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">
-                  Limpiar filtros
-                </button>
+                <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">Limpiar filtros</button>
               </div>
             </div>
           </div>
@@ -274,7 +178,7 @@
             <div class="section-header">
               <div>
                 <h2 class="section-title">Análisis de hábitos</h2>
-                <p class="section-note">Interpretación automática según los movimientos visibles con los filtros actuales</p>
+                <p class="section-note">Interpretación automática según los movimientos visibles</p>
               </div>
             </div>
 
@@ -391,9 +295,7 @@
 
           <div class="budget-summary-header">
             <h3 id="budget-title" class="budget-title">Resumen del presupuesto</h3>
-            <button id="btn-eliminar-presupuesto" type="button" class="btn btn-delete hidden">
-              Eliminar presupuesto del mes
-            </button>
+            <button id="btn-eliminar-presupuesto" type="button" class="btn btn-delete hidden">Eliminar presupuesto del mes</button>
           </div>
 
           <div class="budget-cards-grid">
@@ -437,9 +339,7 @@
             <div class="section-header">
               <div>
                 <h2 class="section-title">Seguridad</h2>
-                <p class="section-note">
-                  Protege esta app con un PIN local guardado en tu navegador
-                </p>
+                <p class="section-note">Protege esta app con un PIN local guardado en tu navegador</p>
               </div>
             </div>
 
@@ -452,51 +352,24 @@
               <div class="security-grid">
                 <div id="security-current-group" class="field">
                   <label for="security-current-pin">PIN actual</label>
-                  <input
-                    id="security-current-pin"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="4"
-                    placeholder="1234"
-                    autocomplete="off"
-                  />
+                  <input id="security-current-pin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
                 </div>
 
                 <div class="field">
                   <label for="security-new-pin">Nuevo PIN</label>
-                  <input
-                    id="security-new-pin"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="4"
-                    placeholder="1234"
-                    autocomplete="off"
-                  />
+                  <input id="security-new-pin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
                 </div>
 
                 <div class="field">
                   <label for="security-confirm-pin">Confirmar nuevo PIN</label>
-                  <input
-                    id="security-confirm-pin"
-                    type="password"
-                    inputmode="numeric"
-                    maxlength="4"
-                    placeholder="1234"
-                    autocomplete="off"
-                  />
+                  <input id="security-confirm-pin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
                 </div>
               </div>
 
               <div class="security-actions">
-                <button id="btn-save-pin" type="submit" class="btn btn-primary">
-                  Configurar PIN
-                </button>
-                <button id="btn-delete-pin" type="button" class="btn btn-delete hidden">
-                  Eliminar PIN
-                </button>
-                <button id="btn-lock-now" type="button" class="btn btn-secondary hidden">
-                  Bloquear ahora
-                </button>
+                <button id="btn-save-pin" type="submit" class="btn btn-primary">Configurar PIN</button>
+                <button id="btn-delete-pin" type="button" class="btn btn-delete hidden">Eliminar PIN</button>
+                <button id="btn-lock-now" type="button" class="btn btn-secondary hidden">Bloquear ahora</button>
               </div>
 
               <p id="security-message" class="mensaje"></p>
@@ -505,6 +378,73 @@
         </section>
       </main>
     </div>
+
+    <button id="fab-open-modal" class="fab" aria-label="Nuevo movimiento">＋</button>
+
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2 id="modal-title" class="section-title">Nuevo movimiento</h2>
+            <p class="section-note">Registra rápido desde aquí</p>
+          </div>
+          <button id="btn-close-modal" type="button" class="modal-close">✕</button>
+        </div>
+
+        <form id="form-movimiento" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="tipo">Tipo</label>
+              <select id="tipo" required>
+                <option value="">Selecciona</option>
+                <option value="ingreso">Ingreso</option>
+                <option value="egreso">Egreso</option>
+              </select>
+            </div>
+
+            <div id="subtipo-egreso-group" class="field hidden">
+              <label for="subtipo-egreso">Clase de egreso</label>
+              <select id="subtipo-egreso">
+                <option value="">Selecciona</option>
+                <option value="gasto">Gasto</option>
+                <option value="inversion">Inversión</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="categoria">Categoría</label>
+              <input id="categoria" type="text" placeholder="Ej: Comida, Transporte, Educación" maxlength="40" required />
+              <p id="hint-categoria" class="input-hint"></p>
+            </div>
+
+            <div class="field field-full">
+              <label for="descripcion">Descripción</label>
+              <input id="descripcion" type="text" placeholder="Ej: Compra de mercado" maxlength="80" required />
+              <p id="hint-descripcion" class="input-hint"></p>
+            </div>
+
+            <div class="field">
+              <label for="monto">Monto</label>
+              <input id="monto" type="number" placeholder="0.00" step="0.01" min="0.01" required />
+            </div>
+
+            <div class="field">
+              <label for="fecha">Fecha</label>
+              <input id="fecha" type="date" required />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btn-submit" class="btn btn-primary">Guardar movimiento</button>
+            <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary hidden">Cancelar edición</button>
+          </div>
+
+          <p id="mensaje" class="mensaje"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
   </div>
 
   <script src="app.js"></script>
