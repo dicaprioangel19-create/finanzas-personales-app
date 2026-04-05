@@ -486,7 +486,7 @@ select:focus {
 }
 
 #grafico-saldo-acumulado {
-  min-width: 620px;
+  min-width: 420px;
   width: 100%;
   border-radius: 18px;
 }
@@ -942,7 +942,7 @@ select:focus {
   position: relative;
   margin-top: 14px;
   width: 100%;
-  min-width: 620px;
+  min-width: 420px;
   border-radius: 16px;
   background: linear-gradient(180deg, #23211f 0%, #1f1d1b 100%);
   border: 1px solid #3a3530;
@@ -951,18 +951,18 @@ select:focus {
 
 #grafico-saldo-navigator {
   width: 100%;
-  height: 90px;
+  height: 78px;
   display: block;
 }
 
 .range-selection {
   position: absolute;
-  top: 10px;
-  bottom: 10px;
+  top: 8px;
+  bottom: 8px;
   left: 12%;
   width: 38%;
   border: 2px solid rgba(200, 155, 90, 0.9);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(200, 155, 90, 0.12);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   display: flex;
@@ -980,7 +980,7 @@ select:focus {
 }
 
 .range-handle {
-  width: 18px;
+  width: 14px;
   border: none;
   background: linear-gradient(180deg, #d0a86b 0%, #b98946 100%);
   cursor: ew-resize;
@@ -1013,4 +1013,55 @@ select:focus {
 
 .range-handle::after {
   right: 6px;
+}
+
+@media (max-width: 767px) {
+  .chart-header {
+    gap: 10px;
+  }
+
+  .chart-balance-value {
+    font-size: 1.2rem;
+  }
+
+  .balance-chart-info {
+    gap: 8px 10px;
+  }
+
+  .mini-legend-item {
+    font-size: 0.84rem;
+  }
+
+  .line-canvas-box {
+    padding-bottom: 6px;
+  }
+
+  #grafico-saldo-acumulado {
+    min-width: 420px;
+  }
+
+  .chart-range-nav {
+    min-width: 420px;
+    margin-top: 10px;
+    border-radius: 14px;
+  }
+
+  #grafico-saldo-navigator {
+    height: 68px;
+  }
+
+  .range-selection {
+    top: 6px;
+    bottom: 6px;
+    border-radius: 9px;
+  }
+
+  .range-handle {
+    width: 12px;
+  }
+
+  .range-handle::before,
+  .range-handle::after {
+    height: 14px;
+  }
 }
