@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">☰</button>
+  <button id="menu-toggle" class="menu-toggle hidden" aria-label="Abrir menú">☰</button>
   <div id="menu-overlay" class="menu-overlay"></div>
 
   <aside id="side-menu" class="side-menu">
@@ -18,13 +18,14 @@
     </div>
 
     <nav class="side-menu-nav">
-      <button class="menu-link" data-section="registro">Registrar movimiento</button>
+      <button class="menu-link active" data-section="registro">Registrar movimiento</button>
       <button class="menu-link" data-section="dashboard">Dashboard</button>
       <button class="menu-link" data-section="presupuesto">Presupuesto</button>
       <button class="menu-link" data-section="perfil">Perfil</button>
     </nav>
   </aside>
 
+  <!-- LOCK -->
   <div id="lock-screen" class="lock-screen">
     <div class="lock-card">
       <h2 id="lock-title" class="lock-title">Desbloquear app</h2>
@@ -36,7 +37,7 @@
           <input id="lock-pin" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
         </div>
 
-        <div id="lock-setup-group" class="lock-setup-group hidden">
+        <div id="lock-setup-group" class="hidden">
           <div class="field">
             <label for="lock-pin-new">Nuevo PIN</label>
             <input id="lock-pin-new" type="password" inputmode="numeric" maxlength="4" placeholder="1234" autocomplete="off" />
@@ -57,6 +58,7 @@
     </div>
   </div>
 
+  <!-- APP -->
   <div id="app-container" class="hidden">
     <div class="app">
       <header class="app-header">
@@ -65,7 +67,8 @@
       </header>
 
       <main class="main-grid">
-        <section id="registro" class="app-section card">
+        <!-- REGISTRO -->
+        <section id="registro" class="app-section card active-section">
           <div class="section-header">
             <div>
               <h2 class="section-title">Registrar movimiento</h2>
@@ -83,7 +86,7 @@
             </div>
 
             <div id="balance-chart-empty-state" class="empty-state hidden">
-              Aún no hay movimientos suficientes para mostrar la línea de saldo acumulado.
+              Aún no hay movimientos suficientes para mostrar el gráfico de saldo acumulado.
             </div>
 
             <div id="balance-chart-wrapper" class="balance-chart-wrapper chart-card">
@@ -105,18 +108,18 @@
                 </div>
               </div>
 
-              <div class="line-canvas-box">
-  <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
+              <div id="line-canvas-scroll" class="line-canvas-scroll">
+                <canvas id="grafico-saldo-acumulado" width="980" height="360"></canvas>
 
-  <div id="chart-tooltip" class="chart-tooltip">
-    <div id="chart-tooltip-date" class="chart-tooltip-date"></div>
-    <div id="chart-tooltip-value" class="chart-tooltip-value"></div>
-  </div>
-</div>
+                <div id="chart-tooltip" class="chart-tooltip">
+                  <div id="chart-tooltip-date" class="chart-tooltip-date"></div>
+                  <div id="chart-tooltip-value" class="chart-tooltip-value"></div>
+                </div>
+              </div>
 
-<div id="chart-range-nav" class="chart-range-nav">
-  <canvas id="grafico-saldo-navigator" width="980" height="90"></canvas>
-</div>
+              <div id="chart-range-scroll" class="chart-range-scroll">
+                <canvas id="grafico-saldo-navigator" width="980" height="84"></canvas>
+              </div>
             </div>
           </div>
 
@@ -133,21 +136,22 @@
           </div>
         </section>
 
+        <!-- DASHBOARD -->
         <section id="dashboard" class="app-section card">
           <h2 class="section-title">Dashboard</h2>
 
           <div class="dashboard-grid">
-            <article class="stat-card stat-income">
+            <article class="stat-card">
               <span class="stat-label">Ingresos</span>
               <strong id="total-ingresos">S/ 0.00</strong>
             </article>
 
-            <article class="stat-card stat-expense">
+            <article class="stat-card">
               <span class="stat-label">Egresos</span>
               <strong id="total-egresos">S/ 0.00</strong>
             </article>
 
-            <article class="stat-card stat-balance">
+            <article class="stat-card">
               <span class="stat-label">Balance</span>
               <strong id="balance-total">S/ 0.00</strong>
             </article>
@@ -171,9 +175,9 @@
                 <input id="filtro-mes" type="month" />
               </div>
 
-              <div class="field filter-action">
+              <div class="field">
                 <label class="label-invisible">Acción</label>
-                <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">Limpiar filtros</button>
+                <button id="btn-limpiar-filtros" type="button" class="btn btn-secondary">Limpiar filtros</button>
               </div>
             </div>
           </div>
@@ -257,7 +261,6 @@
               <div class="chart-canvas-box">
                 <canvas id="grafico-categorias" width="320" height="320"></canvas>
               </div>
-
               <div id="chart-legend" class="chart-legend"></div>
             </div>
           </div>
@@ -268,6 +271,7 @@
           </div>
         </section>
 
+        <!-- PRESUPUESTO -->
         <section id="presupuesto" class="app-section card">
           <div class="section-header">
             <div>
@@ -288,7 +292,7 @@
                 <input id="presupuesto-monto" type="number" placeholder="0.00" step="0.01" min="0.01" required />
               </div>
 
-              <div class="field budget-action">
+              <div class="field">
                 <label class="label-invisible">Acción</label>
                 <button type="submit" class="btn btn-primary">Guardar presupuesto</button>
               </div>
@@ -336,6 +340,7 @@
           </div>
         </section>
 
+        <!-- PERFIL -->
         <section id="perfil" class="app-section card">
           <h2 class="section-title">Perfil</h2>
 
@@ -383,8 +388,10 @@
       </main>
     </div>
 
+    <!-- FAB -->
     <button id="fab-open-modal" class="fab" aria-label="Nuevo movimiento">＋</button>
 
+    <!-- MODAL -->
     <div id="modal-overlay" class="modal-overlay hidden">
       <div class="modal-card">
         <div class="modal-header">
@@ -448,6 +455,7 @@
       </div>
     </div>
 
+    <!-- TOAST -->
     <div id="toast" class="toast"></div>
   </div>
 

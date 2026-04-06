@@ -7,6 +7,7 @@ let presupuestos = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY)) || {};
 let editandoId = null;
 let pinGuardado = localStorage.getItem(PIN_STORAGE_KEY) || "";
 let modoLock = "unlock";
+let sincronizandoScrollGrafico = false;
 
 // LOCK
 const lockScreen = document.getElementById("lock-screen");
@@ -22,7 +23,7 @@ const lockPin = document.getElementById("lock-pin");
 const lockPinNew = document.getElementById("lock-pin-new");
 const lockPinConfirm = document.getElementById("lock-pin-confirm");
 
-// FORM MOVIMIENTO
+// FORM
 const form = document.getElementById("form-movimiento");
 const tipoInput = document.getElementById("tipo");
 const subtipoEgresoGroup = document.getElementById("subtipo-egreso-group");
@@ -127,10 +128,10 @@ const saldoActualGraficoEl = document.getElementById("saldo-actual-grafico");
 const chartTooltip = document.getElementById("chart-tooltip");
 const chartTooltipDate = document.getElementById("chart-tooltip-date");
 const chartTooltipValue = document.getElementById("chart-tooltip-value");
-
+const lineCanvasScroll = document.getElementById("line-canvas-scroll");
+const chartRangeScroll = document.getElementById("chart-range-scroll");
 const canvasNavigator = document.getElementById("grafico-saldo-navigator");
 const ctxNavigator = canvasNavigator.getContext("2d");
-const chartRangeNav = document.getElementById("chart-range-nav");
 
 // MENÚ
 const menuToggle = document.getElementById("menu-toggle");
@@ -144,8 +145,9 @@ const COLORES_GRAFICO = [
   "#ea580c", "#4f46e5", "#65a30d", "#db2777", "#0f766e", "#9333ea"
 ];
 
-const COLOR_SALDO_SUBE = "#5b8def";
+const COLOR_SALDO_SUBE = "#4fb37c";
 const COLOR_SALDO_BAJA = "#d46464";
+const COLOR_PUNTO = "#5b8def";
 const COLOR_TEXTO_GRAFICO = "#b2a79a";
 const COLOR_LINEA_GUIA = "rgba(178, 167, 154, 0.14)";
 const COLOR_LINEA_CERO = "rgba(200, 155, 90, 0.28)";
@@ -156,7 +158,7 @@ const MAPA_SUGERENCIAS = {
   comida: ["pollo", "restaurante", "almuerzo", "desayuno", "cena", "mercado", "snack", "pan", "fruta", "verdura"],
   transporte: ["uber", "taxi", "bus", "pasaje", "peaje", "combustible", "gasolina", "moto"],
   educación: ["curso", "libro", "matricula", "colegiatura", "universidad", "senati", "clase"],
-  salud: ["farmacia", "doctor", "consulta", "medicina", "ibuprofeno", "vitamina", "análisis"],
+  salud: ["farmacia", "doctor", "consulta", "medicina", "vitamina", "análisis"],
   hogar: ["alquiler", "luz", "agua", "internet", "gas", "mueble", "limpieza"],
   trabajo: ["cliente", "software", "herramienta", "dominio", "hosting", "canva", "office"],
   inversión: ["curso", "libro", "equipo", "herramienta", "dominio", "hosting", "capacitación", "formación"]
@@ -171,9 +173,9 @@ document.addEventListener("DOMContentLoaded", () => {
   actualizarUIEgreso();
   mostrarSeccion("registro");
   cerrarModal();
+  configurarScrollGrafico();
 });
 
-// Eventos base
 lockForm.addEventListener("submit", manejarLockForm);
 form.addEventListener("submit", manejarSubmitFormulario);
 btnCancelarEdicion.addEventListener("click", cancelarEdicion);
@@ -288,9 +290,7 @@ function abrirModalNuevoMovimiento() {
   modalOverlay.classList.remove("hidden");
   modalTitle.textContent = editandoId ? "Editar movimiento" : "Nuevo movimiento";
   document.body.style.overflow = "hidden";
-  setTimeout(() => {
-    tipoInput.focus();
-  }, 50);
+  setTimeout(() => tipoInput.focus(), 50);
 }
 
 function cerrarModal() {
@@ -299,9 +299,7 @@ function cerrarModal() {
 }
 
 function vibrarSuave() {
-  if ("vibrate" in navigator) {
-    navigator.vibrate(10);
-  }
+  if ("vibrate" in navigator) navigator.vibrate(10);
 }
 
 function mostrarToast(texto, tipo = "success") {
@@ -311,10 +309,10 @@ function mostrarToast(texto, tipo = "success") {
   clearTimeout(mostrarToast.timeoutId);
   mostrarToast.timeoutId = setTimeout(() => {
     toastEl.className = "toast";
-  }, 2300);
+  }, 2200);
 }
 
-// PIN
+// LOCK
 function iniciarSistemaPIN() {
   if (pinGuardado) mostrarModoUnlock();
   else mostrarModoSetup();
@@ -518,12 +516,10 @@ function procesarSugerenciasInteligentes() {
     categoriaInput.value = capitalizarTexto(sugerenciaCategoria);
     hintCategoria.textContent = `Sugerencia automática: ${capitalizarTexto(sugerenciaCategoria)}`;
   } else {
-    hintCategoria.textContent = sugerenciaCategoria
-      ? `Coincide con: ${capitalizarTexto(sugerenciaCategoria)}`
-      : "";
+    hintCategoria.textContent = sugerenciaCategoria ? `Coincide con: ${capitalizarTexto(sugerenciaCategoria)}` : "";
   }
 
-  if (tipoInput.value === "egreso" && sugerenciaSubtipo) {
+  if (tipoInput.value === "egreso") {
     subtipoEgresoInput.value = sugerenciaSubtipo;
     hintDescripcion.textContent = `Sugerencia: esto parece ${sugerenciaSubtipo === "inversion" ? "inversión" : "gasto"}.`;
   } else {
@@ -543,9 +539,7 @@ function detectarCategoriaPorDescripcion(texto) {
 
 function detectarSubtipoEgresoPorDescripcion(texto) {
   const palabrasInversion = MAPA_SUGERENCIAS["inversión"] || [];
-  if (palabrasInversion.some((palabra) => texto.includes(palabra))) {
-    return "inversion";
-  }
+  if (palabrasInversion.some((palabra) => texto.includes(palabra))) return "inversion";
   return "gasto";
 }
 
@@ -573,7 +567,6 @@ function manejarSubmitFormulario(e) {
 
     if (index === -1) {
       mostrarMensaje("No se encontró el movimiento a editar.", "error");
-      mostrarToast("No se encontró el movimiento", "error");
       return;
     }
 
@@ -647,14 +640,8 @@ function obtenerMovimientosFiltrados() {
 }
 
 function renderDashboard(lista) {
-  const totalIngresos = lista
-    .filter((m) => m.tipo === "ingreso")
-    .reduce((a, m) => a + m.monto, 0);
-
-  const totalEgresos = lista
-    .filter((m) => m.tipo === "egreso")
-    .reduce((a, m) => a + m.monto, 0);
-
+  const totalIngresos = lista.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + m.monto, 0);
+  const totalEgresos = lista.filter((m) => m.tipo === "egreso").reduce((a, m) => a + m.monto, 0);
   const balance = totalIngresos - totalEgresos;
 
   totalIngresosEl.textContent = formatearMoneda(totalIngresos);
@@ -671,13 +658,11 @@ function manejarSubmitPresupuesto(e) {
 
   if (!mes) {
     mostrarMensajePresupuesto("Debes seleccionar el mes del presupuesto.", "error");
-    mostrarToast("Selecciona un mes", "error");
     return;
   }
 
   if (!monto || isNaN(monto) || monto <= 0) {
     mostrarMensajePresupuesto("El presupuesto debe ser mayor que 0.", "error");
-    mostrarToast("El presupuesto debe ser mayor que 0", "error");
     return;
   }
 
@@ -730,7 +715,7 @@ function renderPresupuestoMensual() {
 
   budgetRemainingEl.textContent = formatearMoneda(disponible);
   budgetPercentEl.textContent = `${porcentajeUsado.toFixed(1)}%`;
-  actualizarEstadoBarraPresupuesto(egresoReal, porcentajeUsado);
+  actualizarEstadoBarraPresupuesto(porcentajeUsado, egresoReal);
   btnEliminarPresupuesto.classList.remove("hidden");
 }
 
@@ -753,7 +738,7 @@ function obtenerEgresoDelMes(mesISO) {
     .reduce((acc, mov) => acc + mov.monto, 0);
 }
 
-function actualizarEstadoBarraPresupuesto(egresoReal, porcentajeUsado) {
+function actualizarEstadoBarraPresupuesto(porcentajeUsado) {
   budgetProgressFill.className = "budget-progress-fill";
   budgetProgressFill.style.width = `${Math.min(porcentajeUsado, 100)}%`;
   budgetProgressText.textContent = `${porcentajeUsado.toFixed(1)}%`;
@@ -1034,7 +1019,7 @@ function renderConclusionesHabitos(lista, ingresos, egresos) {
     insights.push(`Tus egresos visibles suman ${formatearMoneda(totalEgresos)}.`);
     insights.push(`El egreso promedio por movimiento es ${formatearMoneda(promedio)}.`);
   } else {
-    insights.push("No hay egresos visibles en los filtros actuales, así que no se puede detectar patrón de egreso.");
+    insights.push("No hay egresos visibles en los filtros actuales.");
   }
 
   if (ingresos.length > 0) {
@@ -1058,9 +1043,7 @@ function renderConclusionesHabitos(lista, ingresos, egresos) {
     insights.push("En el conjunto visible, tus ingresos y egresos están equilibrados.");
   }
 
-  habitosInsights.innerHTML = insights
-    .map((texto) => `<div class="insight-item">${escapeHTML(texto)}</div>`)
-    .join("");
+  habitosInsights.innerHTML = insights.map((texto) => `<div class="insight-item">${escapeHTML(texto)}</div>`).join("");
 }
 
 function generarComparacionMesAnterior() {
@@ -1081,14 +1064,8 @@ function generarComparacionMesAnterior() {
   const diferencia = egresoMesActual - egresoMesAnterior;
   const porcentaje = (Math.abs(diferencia) / egresoMesAnterior) * 100;
 
-  if (diferencia > 0) {
-    return `Egresaste ${formatearMoneda(diferencia)} más que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% más).`;
-  }
-
-  if (diferencia < 0) {
-    return `Egresaste ${formatearMoneda(Math.abs(diferencia))} menos que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% menos).`;
-  }
-
+  if (diferencia > 0) return `Egresaste ${formatearMoneda(diferencia)} más que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% más).`;
+  if (diferencia < 0) return `Egresaste ${formatearMoneda(Math.abs(diferencia))} menos que en ${formatearMesTitulo(mesAnterior)} (${porcentaje.toFixed(1)}% menos).`;
   return `Tus egresos en ${formatearMesTitulo(mesActualAnalisis)} son iguales a los de ${formatearMesTitulo(mesAnterior)}.`;
 }
 
@@ -1117,56 +1094,11 @@ function renderGraficoSaldoAcumulado(lista) {
   balanceChartEmptyState.classList.add("hidden");
   saldoActualGraficoEl.textContent = formatearMoneda(datos[datos.length - 1].saldo);
 
-  dibujarGraficoSaldoAcumulado(datos);
-  activarInteraccionGraficoSaldo(datos);
+  ajustarAnchoCanvasSaldo(datos);
+  dibujarGraficoSaldoAcumuladoCanvas(datos);
   dibujarNavigatorSaldo(datos);
-}
-
-function limpiarCanvasNavigator() {
-  ctxNavigator.clearRect(0, 0, canvasNavigator.width, canvasNavigator.height);
-}
-
-function dibujarNavigatorSaldo(datos) {
-  const width = canvasNavigator.width;
-  const height = canvasNavigator.height;
-
-  const paddingX = 16;
-  const paddingY = 12;
-  const chartWidth = width - paddingX * 2;
-  const chartHeight = height - paddingY * 2;
-
-  const valores = datos.map((item) => item.saldo);
-  const minValor = Math.min(...valores, 0);
-  const maxValor = Math.max(...valores, 0);
-  const rango = maxValor - minValor || 1;
-  const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
-
-  ctxNavigator.fillStyle = "#1f1d1b";
-  ctxNavigator.fillRect(0, 0, width, height);
-
-  ctxNavigator.beginPath();
-
-  datos.forEach((dato, index) => {
-    const x = paddingX + xStep * index;
-    const y = paddingY + ((maxValor - dato.saldo) / rango) * chartHeight;
-
-    if (index === 0) ctxNavigator.moveTo(x, y);
-    else ctxNavigator.lineTo(x, y);
-  });
-
-  ctxNavigator.strokeStyle = "#5b8def";
-  ctxNavigator.lineWidth = 2;
-  ctxNavigator.lineJoin = "round";
-  ctxNavigator.lineCap = "round";
-  ctxNavigator.stroke();
-
-  const yCero = paddingY + ((maxValor - 0) / rango) * chartHeight;
-  ctxNavigator.beginPath();
-  ctxNavigator.moveTo(paddingX, yCero);
-  ctxNavigator.lineTo(width - paddingX, yCero);
-  ctxNavigator.strokeStyle = "rgba(200, 155, 90, 0.25)";
-  ctxNavigator.lineWidth = 1;
-  ctxNavigator.stroke();
+  activarInteraccionGraficoSaldo(datos);
+  sincronizarScrollInicial();
 }
 
 function obtenerDatosSaldoAcumulado(lista) {
@@ -1179,21 +1111,35 @@ function obtenerDatosSaldoAcumulado(lista) {
 
   if (movimientosOrdenados.length === 0) return [];
 
-  const primerDia = movimientosOrdenados[0].fechaISO;
-  const ultimoDia = movimientosOrdenados[movimientosOrdenados.length - 1].fechaISO;
+  const primerDiaMovimiento = movimientosOrdenados[0].fechaISO;
+  const ultimoDiaMovimiento = movimientosOrdenados[movimientosOrdenados.length - 1].fechaISO;
 
   const mapaCambios = {};
   movimientosOrdenados.forEach((mov) => {
-    mapaCambios[mov.fechaISO] = (mapaCambios[mov.fechaISO] || 0) + (mov.tipo === "ingreso" ? mov.monto : -mov.monto);
+    const cambio = mov.tipo === "ingreso" ? mov.monto : -mov.monto;
+    mapaCambios[mov.fechaISO] = (mapaCambios[mov.fechaISO] || 0) + cambio;
   });
 
-  const dias = obtenerRangoDeFechas(primerDia, ultimoDia);
+  const dias = obtenerRangoDeFechas(primerDiaMovimiento, ultimoDiaMovimiento);
   const puntos = [];
+
+  puntos.push({
+    fechaISO: primerDiaMovimiento,
+    label: formatearFechaCorta(primerDiaMovimiento),
+    saldo: 0,
+    esPuntoInicial: true
+  });
+
   let saldoAcumulado = 0;
 
   dias.forEach((fechaISO) => {
     saldoAcumulado += mapaCambios[fechaISO] || 0;
-    puntos.push({ fechaISO, label: formatearFechaCorta(fechaISO), saldo: saldoAcumulado });
+    puntos.push({
+      fechaISO,
+      label: formatearFechaCorta(fechaISO),
+      saldo: saldoAcumulado,
+      esPuntoInicial: false
+    });
   });
 
   return puntos;
@@ -1212,7 +1158,13 @@ function obtenerRangoDeFechas(fechaInicioISO, fechaFinISO) {
   return fechas;
 }
 
-function dibujarGraficoSaldoAcumulado(datos) {
+function ajustarAnchoCanvasSaldo(datos) {
+  const anchoCalculado = Math.max(620, datos.length * 52);
+  canvasBalance.width = anchoCalculado;
+  canvasNavigator.width = anchoCalculado;
+}
+
+function dibujarGraficoSaldoAcumuladoCanvas(datos) {
   const width = canvasBalance.width;
   const height = canvasBalance.height;
 
@@ -1225,70 +1177,32 @@ function dibujarGraficoSaldoAcumulado(datos) {
   const chartHeight = height - paddingTop - paddingBottom;
 
   const valores = datos.map((item) => item.saldo);
-  const minValor = Math.min(...valores, 0);
-  const maxValor = Math.max(...valores, 0);
+  const minValorReal = Math.min(...valores);
+  const minValor = minValorReal < 0 ? minValorReal : 0;
+  const maxValorReal = Math.max(...valores);
+  const maxValor = maxValorReal <= 0 ? 1 : maxValorReal;
   const rango = maxValor - minValor || 1;
 
   ctxBalance.fillStyle = COLOR_FONDO_GRAFICO;
   ctxBalance.fillRect(0, 0, width, height);
 
-  dibujarLineasGuiaSaldo({
-    width,
-    paddingLeft,
-    paddingRight,
-    paddingTop,
-    chartHeight,
-    minValor,
-    maxValor,
-    rango
-  });
+  dibujarLineasGuiaSaldo({ width, paddingLeft, paddingRight, paddingTop, chartHeight, minValor, maxValor, rango });
+  dibujarDivisoresMensuales(datos, { height, paddingLeft, paddingBottom, paddingTop, chartWidth });
 
-  dibujarDivisoresMensuales(datos, {
-    width,
-    height,
-    paddingLeft,
-    paddingRight,
-    paddingTop,
-    paddingBottom,
-    chartWidth
-  });
-
-  if (minValor <= 0 && maxValor >= 0) {
-    const yCero = convertirValorAY(0, minValor, maxValor, paddingTop, chartHeight);
-    ctxBalance.beginPath();
-    ctxBalance.moveTo(paddingLeft, yCero);
-    ctxBalance.lineTo(width - paddingRight, yCero);
-    ctxBalance.strokeStyle = COLOR_LINEA_CERO;
-    ctxBalance.lineWidth = 1.5;
-    ctxBalance.stroke();
-  }
+  const yCero = convertirValorAY(0, minValor, maxValor, paddingTop, chartHeight);
+  ctxBalance.beginPath();
+  ctxBalance.moveTo(paddingLeft, yCero);
+  ctxBalance.lineTo(width - paddingRight, yCero);
+  ctxBalance.strokeStyle = COLOR_LINEA_CERO;
+  ctxBalance.lineWidth = 1.5;
+  ctxBalance.stroke();
 
   const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
 
-  dibujarEtiquetasTiempo(datos, {
-    height,
-    paddingLeft,
-    paddingBottom,
-    xStep
-  });
-
-  dibujarTramosSaldo(datos, {
-    paddingLeft,
-    xStep,
-    minValor,
-    maxValor,
-    paddingTop,
-    chartHeight
-  });
-
-  dibujarPuntoFinalSaldo(datos, {
-    paddingLeft,
-    xStep,
-    minValor,
-    maxValor,
-    paddingTop,
-    chartHeight
-  });
+  dibujarEtiquetasTiempo(datos, { height, paddingLeft, paddingBottom, xStep });
+  dibujarAreaSuaveSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight, yCero });
+  dibujarTramosSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight });
+  dibujarPuntoFinalSaldo(datos, { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight });
 }
 
 function dibujarLineasGuiaSaldo({ width, paddingLeft, paddingRight, paddingTop, chartHeight, minValor, maxValor, rango }) {
@@ -1355,6 +1269,35 @@ function dibujarEtiquetasTiempo(datos, { height, paddingLeft, paddingBottom, xSt
   });
 }
 
+function dibujarAreaSuaveSaldo(datos, medidas) {
+  const { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight, yCero } = medidas;
+  if (datos.length < 2) return;
+
+  ctxBalance.beginPath();
+
+  const primerX = paddingLeft;
+  const primerY = convertirValorAY(datos[0].saldo, minValor, maxValor, paddingTop, chartHeight);
+  ctxBalance.moveTo(primerX, primerY);
+
+  for (let i = 1; i < datos.length; i++) {
+    const x = paddingLeft + xStep * i;
+    const y = convertirValorAY(datos[i].saldo, minValor, maxValor, paddingTop, chartHeight);
+    ctxBalance.lineTo(x, y);
+  }
+
+  const ultimoX = paddingLeft + xStep * (datos.length - 1);
+  ctxBalance.lineTo(ultimoX, yCero);
+  ctxBalance.lineTo(primerX, yCero);
+  ctxBalance.closePath();
+
+  const degradado = ctxBalance.createLinearGradient(0, paddingTop, 0, paddingTop + chartHeight);
+  degradado.addColorStop(0, "rgba(91, 141, 239, 0.18)");
+  degradado.addColorStop(1, "rgba(91, 141, 239, 0.02)");
+
+  ctxBalance.fillStyle = degradado;
+  ctxBalance.fill();
+}
+
 function dibujarTramosSaldo(datos, medidas) {
   const { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight } = medidas;
 
@@ -1367,13 +1310,15 @@ function dibujarTramosSaldo(datos, medidas) {
     const x2 = paddingLeft + xStep * (i + 1);
     const y2 = convertirValorAY(siguiente.saldo, minValor, maxValor, paddingTop, chartHeight);
 
-    const colorTramo = siguiente.saldo < actual.saldo ? COLOR_SALDO_BAJA : COLOR_SALDO_SUBE;
+    let colorTramo = COLOR_PUNTO;
+    if (siguiente.saldo < actual.saldo) colorTramo = COLOR_SALDO_BAJA;
+    else if (siguiente.saldo > actual.saldo) colorTramo = COLOR_SALDO_SUBE;
 
     ctxBalance.beginPath();
     ctxBalance.moveTo(x1, y1);
     ctxBalance.lineTo(x2, y2);
     ctxBalance.strokeStyle = colorTramo;
-    ctxBalance.lineWidth = 3;
+    ctxBalance.lineWidth = 3.5;
     ctxBalance.lineJoin = "round";
     ctxBalance.lineCap = "round";
     ctxBalance.stroke();
@@ -1382,20 +1327,63 @@ function dibujarTramosSaldo(datos, medidas) {
 
 function dibujarPuntoFinalSaldo(datos, medidas) {
   const { paddingLeft, xStep, minValor, maxValor, paddingTop, chartHeight } = medidas;
-  const ultimo = datos[datos.length - 1];
-  const penultimo = datos.length > 1 ? datos[datos.length - 2] : ultimo;
 
+  const ultimo = datos[datos.length - 1];
   const ultimoX = paddingLeft + xStep * (datos.length - 1);
   const ultimoY = convertirValorAY(ultimo.saldo, minValor, maxValor, paddingTop, chartHeight);
-  const colorPuntoFinal = ultimo.saldo < penultimo.saldo ? COLOR_SALDO_BAJA : COLOR_SALDO_SUBE;
 
   ctxBalance.beginPath();
-  ctxBalance.arc(ultimoX, ultimoY, 5, 0, Math.PI * 2);
-  ctxBalance.fillStyle = colorPuntoFinal;
+  ctxBalance.arc(ultimoX, ultimoY, 10, 0, Math.PI * 2);
+  ctxBalance.fillStyle = "rgba(91, 141, 239, 0.18)";
+  ctxBalance.fill();
+
+  ctxBalance.beginPath();
+  ctxBalance.arc(ultimoX, ultimoY, 5.5, 0, Math.PI * 2);
+  ctxBalance.fillStyle = COLOR_PUNTO;
   ctxBalance.fill();
   ctxBalance.strokeStyle = "#ffffff";
   ctxBalance.lineWidth = 2;
   ctxBalance.stroke();
+}
+
+function dibujarNavigatorSaldo(datos) {
+  const width = canvasNavigator.width;
+  const height = canvasNavigator.height;
+
+  const paddingX = 16;
+  const paddingY = 12;
+  const chartWidth = width - paddingX * 2;
+  const chartHeight = height - paddingY * 2;
+
+  const valores = datos.map((item) => item.saldo);
+  const minValor = Math.min(...valores, 0);
+  const maxValor = Math.max(...valores, 0);
+  const rango = maxValor - minValor || 1;
+  const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
+
+  ctxNavigator.fillStyle = "#1f1d1b";
+  ctxNavigator.fillRect(0, 0, width, height);
+
+  ctxNavigator.beginPath();
+  datos.forEach((dato, index) => {
+    const x = paddingX + xStep * index;
+    const y = paddingY + ((maxValor - dato.saldo) / rango) * chartHeight;
+    if (index === 0) ctxNavigator.moveTo(x, y);
+    else ctxNavigator.lineTo(x, y);
+  });
+  ctxNavigator.strokeStyle = COLOR_PUNTO;
+  ctxNavigator.lineWidth = 2;
+  ctxNavigator.lineJoin = "round";
+  ctxNavigator.lineCap = "round";
+  ctxNavigator.stroke();
+
+  const yCero = paddingY + ((maxValor - 0) / rango) * chartHeight;
+  ctxNavigator.beginPath();
+  ctxNavigator.moveTo(paddingX, yCero);
+  ctxNavigator.lineTo(width - paddingX, yCero);
+  ctxNavigator.strokeStyle = "rgba(200, 155, 90, 0.25)";
+  ctxNavigator.lineWidth = 1;
+  ctxNavigator.stroke();
 }
 
 function convertirValorAY(valor, minValor, maxValor, paddingTop, chartHeight) {
@@ -1405,6 +1393,10 @@ function convertirValorAY(valor, minValor, maxValor, paddingTop, chartHeight) {
 
 function limpiarCanvasBalance() {
   ctxBalance.clearRect(0, 0, canvasBalance.width, canvasBalance.height);
+}
+
+function limpiarCanvasNavigator() {
+  ctxNavigator.clearRect(0, 0, canvasNavigator.width, canvasNavigator.height);
 }
 
 function activarInteraccionGraficoSaldo(datos) {
@@ -1448,7 +1440,7 @@ function manejarInteraccionGraficoSaldo(e, datos, esTouch = false) {
 }
 
 function redibujarGraficoConIndicador(datos, indiceActivo) {
-  dibujarGraficoSaldoAcumulado(datos);
+  dibujarGraficoSaldoAcumuladoCanvas(datos);
 
   const width = canvasBalance.width;
   const paddingLeft = 80;
@@ -1459,8 +1451,10 @@ function redibujarGraficoConIndicador(datos, indiceActivo) {
   const chartHeight = canvasBalance.height - paddingTop - paddingBottom;
 
   const valores = datos.map((item) => item.saldo);
-  const minValor = Math.min(...valores, 0);
-  const maxValor = Math.max(...valores, 0);
+  const minValorReal = Math.min(...valores);
+  const minValor = minValorReal < 0 ? minValorReal : 0;
+  const maxValorReal = Math.max(...valores);
+  const maxValor = maxValorReal <= 0 ? 1 : maxValorReal;
 
   const xStep = datos.length > 1 ? chartWidth / (datos.length - 1) : chartWidth;
   const dato = datos[indiceActivo];
@@ -1468,8 +1462,13 @@ function redibujarGraficoConIndicador(datos, indiceActivo) {
   const y = convertirValorAY(dato.saldo, minValor, maxValor, paddingTop, chartHeight);
 
   ctxBalance.beginPath();
+  ctxBalance.arc(x, y, 10, 0, Math.PI * 2);
+  ctxBalance.fillStyle = "rgba(91, 141, 239, 0.18)";
+  ctxBalance.fill();
+
+  ctxBalance.beginPath();
   ctxBalance.arc(x, y, 6, 0, Math.PI * 2);
-  ctxBalance.fillStyle = "#6ea8ff";
+  ctxBalance.fillStyle = COLOR_PUNTO;
   ctxBalance.fill();
   ctxBalance.strokeStyle = "#ffffff";
   ctxBalance.lineWidth = 2;
@@ -1490,14 +1489,40 @@ function mostrarTooltipGrafico(dato, indice, datos) {
   const rect = canvasBalance.getBoundingClientRect();
   const leftVisual = (xCanvas / canvasBalance.width) * rect.width;
 
-  chartTooltip.style.left = `${Math.max(12, Math.min(leftVisual - 50, rect.width - 130))}px`;
-  chartTooltip.style.top = "12px";
+  chartTooltip.style.left = `${Math.max(12, Math.min(leftVisual - 55, rect.width - 150))}px`;
+  chartTooltip.style.top = "18px";
 }
 
 function ocultarTooltipGrafico() {
   chartTooltip.classList.remove("show");
   const datos = obtenerDatosSaldoAcumulado(obtenerMovimientosFiltrados());
-  if (datos.length >= 2) dibujarGraficoSaldoAcumulado(datos);
+  if (datos.length >= 2) dibujarGraficoSaldoAcumuladoCanvas(datos);
+}
+
+function configurarScrollGrafico() {
+  if (!lineCanvasScroll || !chartRangeScroll) return;
+
+  lineCanvasScroll.addEventListener("scroll", () => {
+    if (sincronizandoScrollGrafico) return;
+    sincronizandoScrollGrafico = true;
+    chartRangeScroll.scrollLeft = lineCanvasScroll.scrollLeft;
+    requestAnimationFrame(() => {
+      sincronizandoScrollGrafico = false;
+    });
+  });
+
+  chartRangeScroll.addEventListener("scroll", () => {
+    if (sincronizandoScrollGrafico) return;
+    sincronizandoScrollGrafico = true;
+    lineCanvasScroll.scrollLeft = chartRangeScroll.scrollLeft;
+    requestAnimationFrame(() => {
+      sincronizandoScrollGrafico = false;
+    });
+  });
+}
+
+function sincronizarScrollInicial() {
+  chartRangeScroll.scrollLeft = lineCanvasScroll.scrollLeft;
 }
 
 // GRÁFICO CIRCULAR
@@ -1584,9 +1609,9 @@ function renderLeyendaGrafico(datos) {
   chartLegend.innerHTML = datos.map((item) => `
     <div class="legend-item">
       <span class="legend-color" style="background: ${item.color};"></span>
-      <div class="legend-content">
+      <div>
         <div class="legend-title-row">
-          <span class="legend-name">${escapeHTML(item.categoria)}</span>
+          <span>${escapeHTML(item.categoria)}</span>
           <span class="legend-amount">${formatearMoneda(item.total)}</span>
         </div>
         <span class="legend-percent">${item.porcentaje.toFixed(1)}% del egreso</span>
@@ -1614,8 +1639,8 @@ function renderResumenCategorias(lista) {
       <div class="category-top">
         <div class="category-name">${escapeHTML(item.categoria)}</div>
         <div class="category-meta">
-          <span class="category-amount">${formatearMoneda(item.total)}</span>
-          <span class="category-percent">${item.porcentaje.toFixed(1)}% del egreso</span>
+          <span>${formatearMoneda(item.total)}</span>
+          <span>${item.porcentaje.toFixed(1)}% del egreso</span>
         </div>
       </div>
       <div class="progress-track">
@@ -1640,11 +1665,8 @@ function renderHistorial(lista) {
 
     const claseBadge = esIngreso ? "badge-ingreso" : esInversion ? "badge-inversion" : "badge-gasto";
     const claseMonto = esIngreso ? "monto-ingreso" : esInversion ? "monto-inversion" : "monto-gasto";
+    const claseTipo = esIngreso ? "ingreso" : esInversion ? "inversion" : "egreso";
     const signo = esIngreso ? "+" : "-";
-
-    let claseTipo = "egreso";
-    if (esIngreso) claseTipo = "ingreso";
-    if (esInversion) claseTipo = "inversion";
 
     const tipoVisible = esIngreso
       ? "Ingreso"
@@ -1677,7 +1699,6 @@ function editarMovimiento(id) {
   const movimiento = movimientos.find((mov) => mov.id === id);
   if (!movimiento) {
     mostrarMensaje("No se encontró el movimiento.", "error");
-    mostrarToast("No se encontró el movimiento", "error");
     return;
   }
 
@@ -1703,9 +1724,7 @@ function eliminarMovimiento(id) {
 
   movimientos = movimientos.filter((mov) => mov.id !== id);
 
-  if (editandoId === id) {
-    resetFormulario();
-  }
+  if (editandoId === id) resetFormulario();
 
   guardarMovimientos();
   renderApp();
@@ -1717,7 +1736,6 @@ function cancelarEdicion() {
   resetFormulario();
   cerrarModal();
   mostrarMensaje("Edición cancelada.", "success");
-  mostrarToast("Edición cancelada", "success");
 }
 
 // EXPORTAR
