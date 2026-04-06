@@ -131,10 +131,6 @@ const chartTooltipValue = document.getElementById("chart-tooltip-value");
 const canvasNavigator = document.getElementById("grafico-saldo-navigator");
 const ctxNavigator = canvasNavigator.getContext("2d");
 const chartRangeNav = document.getElementById("chart-range-nav");
-const rangeSelection = document.getElementById("range-selection");
-const rangeHandleLeft = document.getElementById("range-handle-left");
-const rangeHandleRight = document.getElementById("range-handle-right");
-const rangeDragArea = document.getElementById("range-drag-area");
 
 // MENÚ
 const menuToggle = document.getElementById("menu-toggle");
@@ -156,101 +152,6 @@ const COLOR_LINEA_CERO = "rgba(200, 155, 90, 0.28)";
 const COLOR_MES_DIVISOR = "rgba(255, 255, 255, 0.08)";
 const COLOR_FONDO_GRAFICO = "#262422";
 
-let chartRange = {
-  start: 0,
-  end: 0
-};
-
-let chartRangeInteraction = {
-  active: false,
-  mode: "",
-  startX: 0,
-  startStart: 0,
-  startEnd: 0
-};
-
-function iniciarEventosRangoGrafico() {
-  if (!rangeHandleLeft || !rangeHandleRight || !rangeDragArea) return;
-
-  rangeHandleLeft.addEventListener("pointerdown", (e) => iniciarInteraccionRango(e, "left"));
-  rangeHandleRight.addEventListener("pointerdown", (e) => iniciarInteraccionRango(e, "right"));
-  rangeDragArea.addEventListener("pointerdown", (e) => iniciarInteraccionRango(e, "move"));
-
-  window.addEventListener("pointermove", moverInteraccionRango, { passive: false });
-window.addEventListener("pointerup", finalizarInteraccionRango);
-window.addEventListener("pointercancel", finalizarInteraccionRango);
-}
-
-function iniciarInteraccionRango(e, mode) {
-  e.preventDefault();
-
-  chartRangeInteraction.active = true;
-  chartRangeInteraction.mode = mode;
-  chartRangeInteraction.startX = e.clientX;
-  chartRangeInteraction.startStart = chartRange.start;
-  chartRangeInteraction.startEnd = chartRange.end;
-}
-function moverInteraccionRango(e) {
-  if (!chartRangeInteraction.active) return;
-
-  e.preventDefault();
-
-  const lista = obtenerMovimientosFiltrados();
-  const datos = obtenerDatosSaldoAcumulado(lista);
-  if (datos.length < 2) return;
-
-  const rect = chartRangeNav.getBoundingClientRect();
-  const total = datos.length - 1;
-  const deltaX = e.clientX - chartRangeInteraction.startX;
-  const deltaPercent = deltaX / rect.width;
-  const deltaIndex = Math.round(deltaPercent * total);
-
-  let nuevoStart = chartRangeInteraction.startStart;
-  let nuevoEnd = chartRangeInteraction.startEnd;
-
-  if (chartRangeInteraction.mode === "move") {
-    const anchoActual = chartRangeInteraction.startEnd - chartRangeInteraction.startStart;
-    nuevoStart = chartRangeInteraction.startStart + deltaIndex;
-    nuevoEnd = nuevoStart + anchoActual;
-
-    if (nuevoStart < 0) {
-      nuevoStart = 0;
-      nuevoEnd = anchoActual;
-    }
-
-    if (nuevoEnd > total) {
-      nuevoEnd = total;
-      nuevoStart = total - anchoActual;
-    }
-  }
-
-  if (chartRangeInteraction.mode === "left") {
-    nuevoStart = chartRangeInteraction.startStart + deltaIndex;
-    if (nuevoStart < 0) nuevoStart = 0;
-    if (nuevoStart >= nuevoEnd - 1) nuevoStart = nuevoEnd - 1;
-  }
-
-  if (chartRangeInteraction.mode === "right") {
-    nuevoEnd = chartRangeInteraction.startEnd + deltaIndex;
-    if (nuevoEnd > total) nuevoEnd = total;
-    if (nuevoEnd <= nuevoStart + 1) nuevoEnd = nuevoStart + 1;
-  }
-
-  chartRange.start = nuevoStart;
-  chartRange.end = nuevoEnd;
-
-  const datosVisibles = obtenerDatosVisiblesGrafico(datos);
-  dibujarGraficoSaldoAcumulado(datosVisibles);
-  activarInteraccionGraficoSaldo(datosVisibles);
-  dibujarNavigatorSaldo(datos);
-  actualizarUIRangoGrafico(datos);
-}
-
-function finalizarInteraccionRango() {
-  chartRangeInteraction.active = false;
-  chartRangeInteraction.mode = "";
-}
-
 const MAPA_SUGERENCIAS = {
   comida: ["pollo", "restaurante", "almuerzo", "desayuno", "cena", "mercado", "snack", "pan", "fruta", "verdura"],
   transporte: ["uber", "taxi", "bus", "pasaje", "peaje", "combustible", "gasolina", "moto"],
@@ -270,7 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
   actualizarUIEgreso();
   mostrarSeccion("registro");
   cerrarModal();
-  iniciarEventosRangoGrafico();
 });
 
 // Eventos base
@@ -722,8 +622,6 @@ function manejarSubmitFormulario(e) {
 
 function renderApp() {
   const movimientosFiltrados = obtenerMovimientosFiltrados();
-
-  chartRange.end = 0;
 
   renderDashboard(movimientosFiltrados);
   renderPresupuestoMensual();
@@ -1206,9 +1104,9 @@ function renderGraficoSaldoAcumulado(lista) {
   limpiarCanvasNavigator();
   ocultarTooltipGrafico();
 
-  const datosCompletos = obtenerDatosSaldoAcumulado(lista);
+  const datos = obtenerDatosSaldoAcumulado(lista);
 
-  if (datosCompletos.length < 2) {
+  if (datos.length < 2) {
     balanceChartWrapper.classList.add("hidden");
     balanceChartEmptyState.classList.remove("hidden");
     saldoActualGraficoEl.textContent = "S/ 0.00";
@@ -1217,37 +1115,11 @@ function renderGraficoSaldoAcumulado(lista) {
 
   balanceChartWrapper.classList.remove("hidden");
   balanceChartEmptyState.classList.add("hidden");
-  saldoActualGraficoEl.textContent = formatearMoneda(datosCompletos[datosCompletos.length - 1].saldo);
+  saldoActualGraficoEl.textContent = formatearMoneda(datos[datos.length - 1].saldo);
 
-  inicializarRangoGrafico(datosCompletos);
-  const datosVisibles = obtenerDatosVisiblesGrafico(datosCompletos);
-
-  dibujarGraficoSaldoAcumulado(datosVisibles);
-  activarInteraccionGraficoSaldo(datosVisibles);
-
-  dibujarNavigatorSaldo(datosCompletos);
-  actualizarUIRangoGrafico(datosCompletos);
-}
-
-function inicializarRangoGrafico(datos) {
-  const maxIndex = datos.length - 1;
-
-  if (chartRange.end === 0 || chartRange.end > maxIndex) {
-    const ventanaInicial = Math.min(8, datos.length - 1);
-    chartRange.end = maxIndex;
-    chartRange.start = Math.max(0, maxIndex - ventanaInicial);
-  }
-
-  if (chartRange.start < 0) chartRange.start = 0;
-  if (chartRange.end > maxIndex) chartRange.end = maxIndex;
-
-  if (chartRange.start >= chartRange.end) {
-    chartRange.start = Math.max(0, chartRange.end - 1);
-  }
-}
-
-function obtenerDatosVisiblesGrafico(datos) {
-  return datos.slice(chartRange.start, chartRange.end + 1);
+  dibujarGraficoSaldoAcumulado(datos);
+  activarInteraccionGraficoSaldo(datos);
+  dibujarNavigatorSaldo(datos);
 }
 
 function limpiarCanvasNavigator() {
@@ -1295,18 +1167,6 @@ function dibujarNavigatorSaldo(datos) {
   ctxNavigator.strokeStyle = "rgba(200, 155, 90, 0.25)";
   ctxNavigator.lineWidth = 1;
   ctxNavigator.stroke();
-}
-
-function actualizarUIRangoGrafico(datos) {
-  const total = datos.length;
-  if (total <= 1) return;
-
-  const leftPercent = (chartRange.start / (total - 1)) * 100;
-  const rightPercent = (chartRange.end / (total - 1)) * 100;
-  const widthPercent = rightPercent - leftPercent;
-
-  rangeSelection.style.left = `${leftPercent}%`;
-  rangeSelection.style.width = `${Math.max(widthPercent, 8)}%`;
 }
 
 function obtenerDatosSaldoAcumulado(lista) {
