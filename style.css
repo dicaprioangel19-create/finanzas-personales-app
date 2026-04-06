@@ -968,11 +968,14 @@ select:focus {
   display: flex;
   align-items: stretch;
   z-index: 3;
+  touch-action: none;
 }
 
 .range-drag-area {
   flex: 1;
   cursor: grab;
+  touch-action: none;
+  min-width: 44px;
 }
 
 .range-drag-area:active {
@@ -986,6 +989,7 @@ select:focus {
   cursor: ew-resize;
   position: relative;
   padding: 0;
+  touch-action: none;
 }
 
 .range-handle-left {

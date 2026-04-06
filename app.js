@@ -169,6 +169,88 @@ let chartRangeInteraction = {
   startEnd: 0
 };
 
+function iniciarEventosRangoGrafico() {
+  if (!rangeHandleLeft || !rangeHandleRight || !rangeDragArea) return;
+
+  rangeHandleLeft.addEventListener("pointerdown", (e) => iniciarInteraccionRango(e, "left"));
+  rangeHandleRight.addEventListener("pointerdown", (e) => iniciarInteraccionRango(e, "right"));
+  rangeDragArea.addEventListener("pointerdown", (e) => iniciarInteraccionRango(e, "move"));
+
+  window.addEventListener("pointermove", moverInteraccionRango, { passive: false });
+window.addEventListener("pointerup", finalizarInteraccionRango);
+window.addEventListener("pointercancel", finalizarInteraccionRango);
+}
+
+function iniciarInteraccionRango(e, mode) {
+  e.preventDefault();
+
+  chartRangeInteraction.active = true;
+  chartRangeInteraction.mode = mode;
+  chartRangeInteraction.startX = e.clientX;
+  chartRangeInteraction.startStart = chartRange.start;
+  chartRangeInteraction.startEnd = chartRange.end;
+}
+function moverInteraccionRango(e) {
+  if (!chartRangeInteraction.active) return;
+
+  e.preventDefault();
+
+  const lista = obtenerMovimientosFiltrados();
+  const datos = obtenerDatosSaldoAcumulado(lista);
+  if (datos.length < 2) return;
+
+  const rect = chartRangeNav.getBoundingClientRect();
+  const total = datos.length - 1;
+  const deltaX = e.clientX - chartRangeInteraction.startX;
+  const deltaPercent = deltaX / rect.width;
+  const deltaIndex = Math.round(deltaPercent * total);
+
+  let nuevoStart = chartRangeInteraction.startStart;
+  let nuevoEnd = chartRangeInteraction.startEnd;
+
+  if (chartRangeInteraction.mode === "move") {
+    const anchoActual = chartRangeInteraction.startEnd - chartRangeInteraction.startStart;
+    nuevoStart = chartRangeInteraction.startStart + deltaIndex;
+    nuevoEnd = nuevoStart + anchoActual;
+
+    if (nuevoStart < 0) {
+      nuevoStart = 0;
+      nuevoEnd = anchoActual;
+    }
+
+    if (nuevoEnd > total) {
+      nuevoEnd = total;
+      nuevoStart = total - anchoActual;
+    }
+  }
+
+  if (chartRangeInteraction.mode === "left") {
+    nuevoStart = chartRangeInteraction.startStart + deltaIndex;
+    if (nuevoStart < 0) nuevoStart = 0;
+    if (nuevoStart >= nuevoEnd - 1) nuevoStart = nuevoEnd - 1;
+  }
+
+  if (chartRangeInteraction.mode === "right") {
+    nuevoEnd = chartRangeInteraction.startEnd + deltaIndex;
+    if (nuevoEnd > total) nuevoEnd = total;
+    if (nuevoEnd <= nuevoStart + 1) nuevoEnd = nuevoStart + 1;
+  }
+
+  chartRange.start = nuevoStart;
+  chartRange.end = nuevoEnd;
+
+  const datosVisibles = obtenerDatosVisiblesGrafico(datos);
+  dibujarGraficoSaldoAcumulado(datosVisibles);
+  activarInteraccionGraficoSaldo(datosVisibles);
+  dibujarNavigatorSaldo(datos);
+  actualizarUIRangoGrafico(datos);
+}
+
+function finalizarInteraccionRango() {
+  chartRangeInteraction.active = false;
+  chartRangeInteraction.mode = "";
+}
+
 const MAPA_SUGERENCIAS = {
   comida: ["pollo", "restaurante", "almuerzo", "desayuno", "cena", "mercado", "snack", "pan", "fruta", "verdura"],
   transporte: ["uber", "taxi", "bus", "pasaje", "peaje", "combustible", "gasolina", "moto"],
@@ -188,6 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
   actualizarUIEgreso();
   mostrarSeccion("registro");
   cerrarModal();
+  iniciarEventosRangoGrafico();
 });
 
 // Eventos base
@@ -639,6 +722,9 @@ function manejarSubmitFormulario(e) {
 
 function renderApp() {
   const movimientosFiltrados = obtenerMovimientosFiltrados();
+
+  chartRange.end = 0;
+
   renderDashboard(movimientosFiltrados);
   renderPresupuestoMensual();
   renderHabitos(movimientosFiltrados);
