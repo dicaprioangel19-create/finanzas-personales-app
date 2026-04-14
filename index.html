@@ -21,6 +21,7 @@
       <button class="menu-link active" data-section="registro">Registrar movimiento</button>
       <button class="menu-link" data-section="dashboard">Dashboard</button>
       <button class="menu-link" data-section="presupuesto">Presupuesto</button>
+      <button class="menu-link" data-section="prorrateo">Prorrateo</button>
       <button class="menu-link" data-section="perfil">Perfil</button>
     </nav>
   </aside>
@@ -340,6 +341,68 @@
           </div>
         </section>
 
+        <!-- PRORRATEO -->
+        <section id="prorrateo" class="app-section card">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Prorrateo</h2>
+              <p class="section-note">Planifica gastos futuros y metas con seguimiento real</p>
+            </div>
+            <button id="btn-open-prorrateo-modal-top" type="button" class="btn btn-primary">Nuevo prorrateo</button>
+          </div>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Resumen general</h2>
+                <p class="section-note">Vista rápida del avance total de tus prorrateos</p>
+              </div>
+            </div>
+
+            <div id="prorrateo-resumen" class="prorrateo-summary-grid"></div>
+          </div>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Calendario</h2>
+                <p class="section-note">Mira tus fechas límite en un calendario mensual</p>
+              </div>
+            </div>
+
+            <div class="pr-calendar-wrap">
+              <div class="pr-calendar-header">
+                <button id="pr-btn-prev-month" type="button" class="btn btn-secondary">←</button>
+                <h3 id="pr-calendar-title" class="pr-calendar-title">Mes</h3>
+                <button id="pr-btn-next-month" type="button" class="btn btn-secondary">→</button>
+              </div>
+
+              <div class="pr-calendar-weekdays">
+                <div>Lun</div>
+                <div>Mar</div>
+                <div>Mié</div>
+                <div>Jue</div>
+                <div>Vie</div>
+                <div>Sáb</div>
+                <div>Dom</div>
+              </div>
+
+              <div id="pr-calendar-grid" class="pr-calendar-grid"></div>
+            </div>
+          </div>
+
+          <div class="inner-section card">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Tus prorrateos</h2>
+                <p class="section-note">Administra metas y gastos futuros sin perder el control</p>
+              </div>
+            </div>
+
+            <div id="prorrateo-list" class="prorrateo-list"></div>
+          </div>
+        </section>
+
         <!-- PERFIL -->
         <section id="perfil" class="app-section card">
           <h2 class="section-title">Perfil</h2>
@@ -391,7 +454,7 @@
     <!-- FAB -->
     <button id="fab-open-modal" class="fab" aria-label="Nuevo movimiento">＋</button>
 
-    <!-- MODAL -->
+    <!-- MODAL MOVIMIENTO -->
     <div id="modal-overlay" class="modal-overlay hidden">
       <div class="modal-card">
         <div class="modal-header">
@@ -451,6 +514,84 @@
           </div>
 
           <p id="mensaje" class="mensaje"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL PRORRATEO -->
+    <div id="prorrateo-modal-overlay" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2 id="prorrateo-modal-title" class="section-title">Nuevo prorrateo</h2>
+            <p class="section-note">Registra una meta o gasto futuro</p>
+          </div>
+          <button id="btn-close-prorrateo-modal" type="button" class="modal-close">✕</button>
+        </div>
+
+        <form id="form-prorrateo" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="pr-nombre">Nombre</label>
+              <input id="pr-nombre" type="text" maxlength="60" placeholder="Ej: Alquiler, Laptop, Curso" required />
+            </div>
+
+            <div class="field">
+              <label for="pr-tipo">Tipo</label>
+              <select id="pr-tipo" required>
+                <option value="">Selecciona</option>
+                <option value="gasto_futuro">Gasto futuro</option>
+                <option value="meta">Meta</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="pr-monto-objetivo">Monto objetivo</label>
+              <input id="pr-monto-objetivo" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+            </div>
+
+            <div class="field">
+              <label for="pr-monto-separado">Monto ya separado</label>
+              <input id="pr-monto-separado" type="number" min="0" step="0.01" placeholder="0.00" value="0" />
+            </div>
+
+            <div class="field">
+              <label for="pr-fecha-inicio">Fecha de inicio</label>
+              <input id="pr-fecha-inicio" type="date" required />
+            </div>
+
+            <div class="field">
+              <label for="pr-fecha-limite">Fecha límite</label>
+              <input id="pr-fecha-limite" type="date" required />
+            </div>
+
+            <div class="field">
+              <label for="pr-cuenta">Cuenta o fuente</label>
+              <input id="pr-cuenta" type="text" maxlength="40" placeholder="Ej: BCP, Falabella, Efectivo" required />
+            </div>
+
+            <div class="field">
+              <label for="pr-frecuencia">Frecuencia de visualización</label>
+              <select id="pr-frecuencia" required>
+                <option value="">Selecciona</option>
+                <option value="diario">Diario</option>
+                <option value="semanal">Semanal</option>
+                <option value="mensual">Mensual</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="pr-color">Color</label>
+              <input id="pr-color" type="color" value="#c89b5a" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btn-submit-prorrateo" class="btn btn-primary">Guardar prorrateo</button>
+            <button type="button" id="btn-cancelar-prorrateo-edicion" class="btn btn-secondary hidden">Cancelar edición</button>
+          </div>
+
+          <p id="mensaje-prorrateo" class="mensaje"></p>
         </form>
       </div>
     </div>
