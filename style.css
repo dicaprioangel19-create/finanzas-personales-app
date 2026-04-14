@@ -829,6 +829,10 @@ select:focus {
   cursor: pointer;
 }
 
+.fab.hidden {
+  display: none;
+}
+
 /* TOAST */
 .toast {
   position: fixed;
@@ -887,6 +891,272 @@ select:focus {
   display: none !important;
 }
 
+/* =========================
+   PRORRATEO
+========================= */
+
+.prorrateo-summary-grid {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+  margin: auto;
+}
+
+.pr-summary-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--surface-2) 0%, #292622 100%);
+  border: 1px solid #3a3530;
+  box-shadow: var(--shadow-soft);
+}
+
+.pr-summary-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pr-summary-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pr-calendar-wrap {
+  max-width: 760px;
+  margin: auto;
+}
+
+.pr-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pr-calendar-title {
+  margin: 0;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--text);
+}
+
+.pr-calendar-weekdays,
+.pr-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.pr-calendar-weekdays {
+  margin-bottom: 8px;
+}
+
+.pr-calendar-weekdays div {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 6px 0;
+}
+
+.pr-day-cell {
+  min-height: 92px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid #3a3530;
+  background: linear-gradient(180deg, var(--surface-2) 0%, #282521 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pr-day-cell.is-other-month {
+  opacity: 0.45;
+}
+
+.pr-day-cell.is-today {
+  border-color: rgba(200, 155, 90, 0.6);
+  box-shadow: 0 0 0 1px rgba(200, 155, 90, 0.18);
+}
+
+.pr-day-number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pr-day-events {
+  display: grid;
+  gap: 4px;
+}
+
+.pr-day-event {
+  padding: 4px 6px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: #171411;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.prorrateo-list {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+  margin: auto;
+}
+
+.pr-card {
+  border: 1px solid #3b3732;
+  border-left: 6px solid var(--primary);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--surface-2) 0%, #282521 100%);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.pr-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 16px 0;
+  flex-wrap: wrap;
+}
+
+.pr-card-title-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.pr-card-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.pr-card-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pr-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.pr-badge.tipo {
+  background: rgba(91, 141, 239, 0.14);
+  color: #a8c4ff;
+}
+
+.pr-badge.estado-bien {
+  background: rgba(79, 179, 124, 0.16);
+  color: #8fd8ae;
+}
+
+.pr-badge.estado-atrasado {
+  background: rgba(212, 100, 100, 0.16);
+  color: #f0a0a0;
+}
+
+.pr-badge.estado-completado {
+  background: rgba(200, 155, 90, 0.16);
+  color: #f4d9ae;
+}
+
+.pr-card-body {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.pr-data-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.pr-data-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pr-data-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.pr-data-value {
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+}
+
+.pr-progress-group {
+  display: grid;
+  gap: 10px;
+}
+
+.pr-progress-line {
+  display: grid;
+  gap: 6px;
+}
+
+.pr-progress-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pr-progress-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.pr-progress-track {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid #3b3732;
+  border-radius: 999px;
+  background: #2e2a26;
+}
+
+.pr-progress-fill-real {
+  height: 100%;
+  background: linear-gradient(90deg, #4fb37c 0%, #67c892 100%);
+}
+
+.pr-progress-fill-ideal {
+  height: 100%;
+  background: linear-gradient(90deg, #5b8def 0%, #7aa4ff 100%);
+}
+
+.pr-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#pr-color {
+  min-height: 48px;
+  padding: 6px;
+}
+
 /* RESPONSIVE */
 @media (min-width: 768px) {
   .dashboard-grid {
@@ -902,6 +1172,14 @@ select:focus {
   }
 
   .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .prorrateo-summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .pr-data-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -923,5 +1201,29 @@ select:focus {
   .chart-range-scroll,
   .line-canvas-scroll {
     padding-bottom: 8px;
+  }
+
+  .pr-calendar-grid {
+    gap: 6px;
+  }
+
+  .pr-day-cell {
+    min-height: 84px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .pr-day-number {
+    font-size: 0.8rem;
+  }
+
+  .pr-day-event {
+    font-size: 0.66rem;
+    padding: 3px 5px;
+  }
+
+  .pr-calendar-header .btn {
+    min-height: 40px;
+    padding: 10px 12px;
   }
 }

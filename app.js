@@ -1,13 +1,17 @@
 const STORAGE_KEY = "finanzas_movimientos";
 const BUDGET_STORAGE_KEY = "finanzas_presupuestos";
 const PIN_STORAGE_KEY = "finanzas_pin";
+const PRORRATEO_STORAGE_KEY = "finanzas_prorrateos";
 
 let movimientos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 let presupuestos = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY)) || {};
+let prorrateos = JSON.parse(localStorage.getItem(PRORRATEO_STORAGE_KEY)) || [];
 let editandoId = null;
+let editandoProrrateoId = null;
 let pinGuardado = localStorage.getItem(PIN_STORAGE_KEY) || "";
 let modoLock = "unlock";
 let sincronizandoScrollGrafico = false;
+let prorrateoCalendarDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 // LOCK
 const lockScreen = document.getElementById("lock-screen");
@@ -23,7 +27,7 @@ const lockPin = document.getElementById("lock-pin");
 const lockPinNew = document.getElementById("lock-pin-new");
 const lockPinConfirm = document.getElementById("lock-pin-confirm");
 
-// FORM
+// FORM MOVIMIENTO
 const form = document.getElementById("form-movimiento");
 const tipoInput = document.getElementById("tipo");
 const subtipoEgresoGroup = document.getElementById("subtipo-egreso-group");
@@ -140,6 +144,33 @@ const menuOverlay = document.getElementById("menu-overlay");
 const menuLinks = document.querySelectorAll(".menu-link");
 const appSections = document.querySelectorAll(".app-section");
 
+// PRORRATEO
+const btnOpenProrrateoModalTop = document.getElementById("btn-open-prorrateo-modal-top");
+const prorrateoModalOverlay = document.getElementById("prorrateo-modal-overlay");
+const btnCloseProrrateoModal = document.getElementById("btn-close-prorrateo-modal");
+const formProrrateo = document.getElementById("form-prorrateo");
+const prorrateoModalTitle = document.getElementById("prorrateo-modal-title");
+const btnSubmitProrrateo = document.getElementById("btn-submit-prorrateo");
+const btnCancelarProrrateoEdicion = document.getElementById("btn-cancelar-prorrateo-edicion");
+const mensajeProrrateo = document.getElementById("mensaje-prorrateo");
+
+const prNombreInput = document.getElementById("pr-nombre");
+const prTipoInput = document.getElementById("pr-tipo");
+const prMontoObjetivoInput = document.getElementById("pr-monto-objetivo");
+const prMontoSeparadoInput = document.getElementById("pr-monto-separado");
+const prFechaInicioInput = document.getElementById("pr-fecha-inicio");
+const prFechaLimiteInput = document.getElementById("pr-fecha-limite");
+const prCuentaInput = document.getElementById("pr-cuenta");
+const prColorInput = document.getElementById("pr-color");
+const prFrecuenciaInput = document.getElementById("pr-frecuencia");
+
+const prorrateoResumenEl = document.getElementById("prorrateo-resumen");
+const prorrateoListEl = document.getElementById("prorrateo-list");
+const prCalendarTitle = document.getElementById("pr-calendar-title");
+const prCalendarGrid = document.getElementById("pr-calendar-grid");
+const prBtnPrevMonth = document.getElementById("pr-btn-prev-month");
+const prBtnNextMonth = document.getElementById("pr-btn-next-month");
+
 const COLORES_GRAFICO = [
   "#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2",
   "#ea580c", "#4f46e5", "#65a30d", "#db2777", "#0f766e", "#9333ea"
@@ -173,7 +204,9 @@ document.addEventListener("DOMContentLoaded", () => {
   actualizarUIEgreso();
   mostrarSeccion("registro");
   cerrarModal();
+  cerrarModalProrrateo();
   configurarScrollGrafico();
+  resetFormularioProrrateo();
 });
 
 lockForm.addEventListener("submit", manejarLockForm);
@@ -217,9 +250,46 @@ modalOverlay.addEventListener("click", (e) => {
   if (e.target === modalOverlay) cerrarModal();
 });
 
+if (btnOpenProrrateoModalTop) {
+  btnOpenProrrateoModalTop.addEventListener("click", abrirModalNuevoProrrateo);
+}
+
+if (btnCloseProrrateoModal) {
+  btnCloseProrrateoModal.addEventListener("click", cerrarModalProrrateo);
+}
+
+if (prorrateoModalOverlay) {
+  prorrateoModalOverlay.addEventListener("click", (e) => {
+    if (e.target === prorrateoModalOverlay) cerrarModalProrrateo();
+  });
+}
+
+if (formProrrateo) {
+  formProrrateo.addEventListener("submit", manejarSubmitProrrateo);
+}
+
+if (btnCancelarProrrateoEdicion) {
+  btnCancelarProrrateoEdicion.addEventListener("click", cancelarEdicionProrrateo);
+}
+
+if (prBtnPrevMonth) {
+  prBtnPrevMonth.addEventListener("click", () => {
+    prorrateoCalendarDate = new Date(prorrateoCalendarDate.getFullYear(), prorrateoCalendarDate.getMonth() - 1, 1);
+    renderCalendarioProrrateo();
+  });
+}
+
+if (prBtnNextMonth) {
+  prBtnNextMonth.addEventListener("click", () => {
+    prorrateoCalendarDate = new Date(prorrateoCalendarDate.getFullYear(), prorrateoCalendarDate.getMonth() + 1, 1);
+    renderCalendarioProrrateo();
+  });
+}
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     cerrarModal();
+    cerrarModalProrrateo();
     cerrarMenu();
   }
 });
@@ -267,6 +337,18 @@ function mostrarSeccion(sectionId) {
     seccionActiva.classList.add("active-section");
     actualizarMenuActivo(sectionId);
   }
+
+  actualizarVisibilidadAccionesPorSeccion(sectionId);
+
+  if (sectionId === "prorrateo") {
+    renderProrrateo();
+  }
+}
+
+function actualizarVisibilidadAccionesPorSeccion(sectionId) {
+  if (fabOpenModal) {
+    fabOpenModal.classList.toggle("hidden", sectionId !== "registro");
+  }
 }
 
 if (menuToggle) {
@@ -285,7 +367,7 @@ menuLinks.forEach((link) => {
   });
 });
 
-// MODAL
+// MODAL MOVIMIENTO
 function abrirModalNuevoMovimiento() {
   modalOverlay.classList.remove("hidden");
   modalTitle.textContent = editandoId ? "Editar movimiento" : "Nuevo movimiento";
@@ -490,7 +572,7 @@ function mostrarMensajeSeguridad(texto, tipo) {
   }, 3000);
 }
 
-// FORMULARIO
+// FORMULARIO MOVIMIENTO
 function actualizarUIEgreso() {
   const esEgreso = tipoInput.value === "egreso";
   subtipoEgresoGroup.classList.toggle("hidden", !esEgreso);
@@ -623,6 +705,7 @@ function renderApp() {
   renderGraficoCategorias(movimientosFiltrados);
   renderResumenCategorias(movimientosFiltrados);
   renderHistorial(movimientosFiltrados);
+  renderProrrateo();
 }
 
 function obtenerMovimientosFiltrados() {
@@ -715,7 +798,7 @@ function renderPresupuestoMensual() {
 
   budgetRemainingEl.textContent = formatearMoneda(disponible);
   budgetPercentEl.textContent = `${porcentajeUsado.toFixed(1)}%`;
-  actualizarEstadoBarraPresupuesto(porcentajeUsado, egresoReal);
+  actualizarEstadoBarraPresupuesto(porcentajeUsado);
   btnEliminarPresupuesto.classList.remove("hidden");
 }
 
@@ -1694,7 +1777,7 @@ function renderHistorial(lista) {
   }).join("");
 }
 
-// CRUD
+// CRUD MOVIMIENTOS
 function editarMovimiento(id) {
   const movimiento = movimientos.find((mov) => mov.id === id);
   if (!movimiento) {
@@ -1775,7 +1858,500 @@ function exportarMovimientosCSV() {
   mostrarToast("CSV exportado", "success");
 }
 
-// UTILIDADES
+// =========================
+// PRORRATEO
+// =========================
+
+function abrirModalNuevoProrrateo() {
+  prorrateoModalOverlay.classList.remove("hidden");
+  prorrateoModalTitle.textContent = editandoProrrateoId ? "Editar prorrateo" : "Nuevo prorrateo";
+  document.body.style.overflow = "hidden";
+
+  if (!editandoProrrateoId) {
+    resetFormularioProrrateo();
+  }
+
+  setTimeout(() => prNombreInput.focus(), 50);
+}
+
+function cerrarModalProrrateo() {
+  prorrateoModalOverlay.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function resetFormularioProrrateo() {
+  formProrrateo.reset();
+  editandoProrrateoId = null;
+  btnSubmitProrrateo.textContent = "Guardar prorrateo";
+  btnCancelarProrrateoEdicion.classList.add("hidden");
+  prorrateoModalTitle.textContent = "Nuevo prorrateo";
+  prFechaInicioInput.value = obtenerFechaInput(new Date());
+  prFechaLimiteInput.value = obtenerFechaInput(new Date());
+  prMontoSeparadoInput.value = "0";
+  prColorInput.value = "#c89b5a";
+  mensajeProrrateo.textContent = "";
+  mensajeProrrateo.className = "mensaje";
+}
+
+function mostrarMensajeProrrateo(texto, tipo) {
+  mensajeProrrateo.textContent = texto;
+  mensajeProrrateo.className = `mensaje ${tipo}`;
+
+  clearTimeout(mostrarMensajeProrrateo.timeoutId);
+  mostrarMensajeProrrateo.timeoutId = setTimeout(() => {
+    mensajeProrrateo.textContent = "";
+    mensajeProrrateo.className = "mensaje";
+  }, 3000);
+}
+
+function validarFormularioProrrateo(data) {
+  const errores = [];
+
+  if (!data.nombre) errores.push("Debes escribir un nombre.");
+  if (data.nombre.length < 2) errores.push("El nombre debe tener al menos 2 caracteres.");
+  if (!data.tipo) errores.push("Debes seleccionar el tipo.");
+  if (!data.montoObjetivo || isNaN(data.montoObjetivo) || data.montoObjetivo <= 0) errores.push("El monto objetivo debe ser mayor que 0.");
+  if (isNaN(data.montoSeparado) || data.montoSeparado < 0) errores.push("El monto ya separado no puede ser negativo.");
+  if (!data.fechaInicio) errores.push("Debes seleccionar la fecha de inicio.");
+  if (!data.fechaLimite) errores.push("Debes seleccionar la fecha límite.");
+  if (data.fechaInicio && data.fechaLimite && data.fechaLimite < data.fechaInicio) errores.push("La fecha límite no puede ser menor que la fecha de inicio.");
+  if (!data.cuenta) errores.push("Debes escribir la cuenta o fuente.");
+  if (!data.frecuencia) errores.push("Debes seleccionar la frecuencia.");
+
+  return errores;
+}
+
+function manejarSubmitProrrateo(e) {
+  e.preventDefault();
+
+  const data = {
+    nombre: prNombreInput.value.trim(),
+    tipo: prTipoInput.value,
+    montoObjetivo: Number(prMontoObjetivoInput.value),
+    montoSeparado: Number(prMontoSeparadoInput.value || 0),
+    fechaInicio: prFechaInicioInput.value,
+    fechaLimite: prFechaLimiteInput.value,
+    cuenta: prCuentaInput.value.trim(),
+    color: prColorInput.value || "#c89b5a",
+    frecuencia: prFrecuenciaInput.value
+  };
+
+  const errores = validarFormularioProrrateo(data);
+
+  if (errores.length > 0) {
+    mostrarMensajeProrrateo(errores[0], "error");
+    mostrarToast(errores[0], "error");
+    return;
+  }
+
+  if (editandoProrrateoId) {
+    const index = prorrateos.findIndex((item) => item.id === editandoProrrateoId);
+
+    if (index === -1) {
+      mostrarMensajeProrrateo("No se encontró el prorrateo a editar.", "error");
+      return;
+    }
+
+    prorrateos[index] = {
+      ...prorrateos[index],
+      ...data
+    };
+
+    guardarProrrateos();
+    renderProrrateo();
+    cerrarModalProrrateo();
+    resetFormularioProrrateo();
+    mostrarToast("Prorrateo actualizado", "success");
+    vibrarSuave();
+    return;
+  }
+
+  prorrateos.unshift({
+    id: Date.now(),
+    ...data,
+    creadoEn: new Date().toISOString()
+  });
+
+  guardarProrrateos();
+  renderProrrateo();
+  cerrarModalProrrateo();
+  resetFormularioProrrateo();
+  mostrarToast("Prorrateo guardado", "success");
+  vibrarSuave();
+}
+
+function guardarProrrateos() {
+  localStorage.setItem(PRORRATEO_STORAGE_KEY, JSON.stringify(prorrateos));
+}
+
+function renderProrrateo() {
+  renderResumenProrrateo();
+  renderCalendarioProrrateo();
+  renderListaProrrateo();
+}
+
+function renderResumenProrrateo() {
+  if (!prorrateoResumenEl) return;
+
+  if (prorrateos.length === 0) {
+    prorrateoResumenEl.innerHTML = `
+      <div class="empty-state">Aún no tienes metas o gastos futuros registrados.</div>
+    `;
+    return;
+  }
+
+  const totalObjetivo = prorrateos.reduce((acc, item) => acc + Number(item.montoObjetivo || 0), 0);
+  const totalSeparado = prorrateos.reduce((acc, item) => acc + Number(item.montoSeparado || 0), 0);
+  const totalFaltante = Math.max(0, totalObjetivo - totalSeparado);
+  const completados = prorrateos.filter((item) => Number(item.montoSeparado || 0) >= Number(item.montoObjetivo || 0)).length;
+
+  prorrateoResumenEl.innerHTML = `
+    <article class="pr-summary-card">
+      <span class="pr-summary-label">Total objetivo</span>
+      <strong class="pr-summary-value">${formatearMoneda(totalObjetivo)}</strong>
+    </article>
+
+    <article class="pr-summary-card">
+      <span class="pr-summary-label">Total separado</span>
+      <strong class="pr-summary-value">${formatearMoneda(totalSeparado)}</strong>
+    </article>
+
+    <article class="pr-summary-card">
+      <span class="pr-summary-label">Total faltante</span>
+      <strong class="pr-summary-value">${formatearMoneda(totalFaltante)}</strong>
+    </article>
+
+    <article class="pr-summary-card">
+      <span class="pr-summary-label">Completados</span>
+      <strong class="pr-summary-value">${completados} / ${prorrateos.length}</strong>
+    </article>
+  `;
+}
+
+function renderCalendarioProrrateo() {
+  if (!prCalendarGrid || !prCalendarTitle) return;
+
+  const year = prorrateoCalendarDate.getFullYear();
+  const month = prorrateoCalendarDate.getMonth();
+
+  const primerDiaMes = new Date(year, month, 1);
+  const ultimoDiaMes = new Date(year, month + 1, 0);
+
+  let inicioSemana = primerDiaMes.getDay();
+  inicioSemana = inicioSemana === 0 ? 7 : inicioSemana;
+
+  const diasAntes = inicioSemana - 1;
+  const diasEnMes = ultimoDiaMes.getDate();
+  const totalCeldas = Math.ceil((diasAntes + diasEnMes) / 7) * 7;
+
+  const fechaInicioGrid = new Date(year, month, 1 - diasAntes);
+
+  prCalendarTitle.textContent = capitalizarPrimeraLetra(
+    primerDiaMes.toLocaleDateString("es-PE", { month: "long", year: "numeric" })
+  );
+
+  const hoyISO = obtenerFechaInput(new Date());
+
+  let html = "";
+
+  for (let i = 0; i < totalCeldas; i++) {
+    const fecha = new Date(fechaInicioGrid);
+    fecha.setDate(fechaInicioGrid.getDate() + i);
+
+    const fechaISO = obtenerFechaInput(fecha);
+    const esOtroMes = fecha.getMonth() !== month;
+    const esHoy = fechaISO === hoyISO;
+
+    const eventos = prorrateos.filter((item) => item.fechaLimite === fechaISO);
+
+    html += `
+      <div class="pr-day-cell ${esOtroMes ? "is-other-month" : ""} ${esHoy ? "is-today" : ""}">
+        <div class="pr-day-number">${fecha.getDate()}</div>
+        <div class="pr-day-events">
+          ${eventos.map((item) => `
+            <div class="pr-day-event" style="background:${item.color};">
+              ${escapeHTML(item.nombre)}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  prCalendarGrid.innerHTML = html;
+}
+
+function renderListaProrrateo() {
+  if (!prorrateoListEl) return;
+
+  if (prorrateos.length === 0) {
+    prorrateoListEl.innerHTML = `<div class="empty-state">No tienes prorrateos creados todavía.</div>`;
+    return;
+  }
+
+  prorrateoListEl.innerHTML = prorrateos.map((item) => {
+    const calculo = calcularDatosProrrateo(item);
+
+    return `
+      <article class="pr-card" style="border-left-color:${item.color};">
+        <div class="pr-card-header">
+          <div class="pr-card-title-wrap">
+            <h3 class="pr-card-title">${escapeHTML(item.nombre)}</h3>
+            <div class="pr-card-badges">
+              <span class="pr-badge tipo">${item.tipo === "meta" ? "Meta" : "Gasto futuro"}</span>
+              <span class="pr-badge ${calculo.estadoClase}">${calculo.estadoTexto}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pr-card-body">
+          <div class="pr-data-grid">
+            <div class="pr-data-item">
+              <span class="pr-data-label">Cuenta</span>
+              <span class="pr-data-value">${escapeHTML(item.cuenta)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Frecuencia</span>
+              <span class="pr-data-value">${capitalizarPrimeraLetra(item.frecuencia)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Fecha inicio</span>
+              <span class="pr-data-value">${formatearFechaHumana(item.fechaInicio)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Fecha límite</span>
+              <span class="pr-data-value">${formatearFechaHumana(item.fechaLimite)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Monto objetivo</span>
+              <span class="pr-data-value">${formatearMoneda(item.montoObjetivo)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Monto separado</span>
+              <span class="pr-data-value">${formatearMoneda(item.montoSeparado)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Monto faltante</span>
+              <span class="pr-data-value">${formatearMoneda(calculo.montoFaltante)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Debes separar (${item.frecuencia})</span>
+              <span class="pr-data-value">${formatearMoneda(calculo.montoSegunFrecuencia)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Ideal acumulado hoy</span>
+              <span class="pr-data-value">${formatearMoneda(calculo.idealAcumuladoHoy)}</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Progreso real</span>
+              <span class="pr-data-value">${calculo.progresoReal.toFixed(1)}%</span>
+            </div>
+
+            <div class="pr-data-item">
+              <span class="pr-data-label">Progreso ideal</span>
+              <span class="pr-data-value">${calculo.progresoIdeal.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          <div class="pr-progress-group">
+            <div class="pr-progress-line">
+              <div class="pr-progress-top">
+                <span class="pr-progress-label">Progreso real</span>
+                <span class="pr-progress-label">${calculo.progresoReal.toFixed(1)}%</span>
+              </div>
+              <div class="pr-progress-track">
+                <div class="pr-progress-fill-real" style="width:${Math.min(calculo.progresoReal, 100)}%;"></div>
+              </div>
+            </div>
+
+            <div class="pr-progress-line">
+              <div class="pr-progress-top">
+                <span class="pr-progress-label">Progreso ideal</span>
+                <span class="pr-progress-label">${calculo.progresoIdeal.toFixed(1)}%</span>
+              </div>
+              <div class="pr-progress-track">
+                <div class="pr-progress-fill-ideal" style="width:${Math.min(calculo.progresoIdeal, 100)}%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pr-card-actions">
+            <button class="btn btn-primary" type="button" onclick="sumarDineroProrrateo(${item.id})">Sumar dinero</button>
+            <button class="btn btn-edit" type="button" onclick="editarProrrateo(${item.id})">Editar</button>
+            <button class="btn btn-delete" type="button" onclick="eliminarProrrateo(${item.id})">Eliminar</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function calcularDatosProrrateo(item) {
+  const hoy = new Date();
+  const hoyISO = obtenerFechaInput(hoy);
+
+  const montoObjetivo = Number(item.montoObjetivo || 0);
+  const montoSeparado = Number(item.montoSeparado || 0);
+  const montoFaltante = Math.max(0, montoObjetivo - montoSeparado);
+
+  const inicio = new Date(`${item.fechaInicio}T00:00:00`);
+  const limite = new Date(`${item.fechaLimite}T00:00:00`);
+  const hoyDate = new Date(`${hoyISO}T00:00:00`);
+
+  const diasTotales = Math.max(1, diferenciaDias(inicio, limite) + 1);
+
+  let diasTranscurridos = 0;
+  if (hoyDate < inicio) {
+    diasTranscurridos = 0;
+  } else if (hoyDate > limite) {
+    diasTranscurridos = diasTotales;
+  } else {
+    diasTranscurridos = diferenciaDias(inicio, hoyDate) + 1;
+  }
+
+  const idealAcumuladoHoy = montoObjetivo * (diasTranscurridos / diasTotales);
+
+  const progresoReal = montoObjetivo > 0 ? (montoSeparado / montoObjetivo) * 100 : 0;
+  const progresoIdeal = montoObjetivo > 0 ? (idealAcumuladoHoy / montoObjetivo) * 100 : 0;
+
+  let estadoTexto = "Vas bien";
+  let estadoClase = "estado-bien";
+
+  if (montoSeparado >= montoObjetivo) {
+    estadoTexto = "Completado";
+    estadoClase = "estado-completado";
+  } else if (montoSeparado + 0.009 < idealAcumuladoHoy) {
+    estadoTexto = "Vas atrasado";
+    estadoClase = "estado-atrasado";
+  }
+
+  const montoSegunFrecuencia = calcularMontoSegunFrecuencia(item, hoyDate, montoFaltante);
+
+  return {
+    montoFaltante,
+    idealAcumuladoHoy: Math.min(idealAcumuladoHoy, montoObjetivo),
+    progresoReal: Math.max(0, progresoReal),
+    progresoIdeal: Math.max(0, Math.min(progresoIdeal, 100)),
+    estadoTexto,
+    estadoClase,
+    montoSegunFrecuencia
+  };
+}
+
+function calcularMontoSegunFrecuencia(item, hoyDate, montoFaltante) {
+  if (montoFaltante <= 0) return 0;
+
+  const inicio = new Date(`${item.fechaInicio}T00:00:00`);
+  const limite = new Date(`${item.fechaLimite}T00:00:00`);
+
+  const base = hoyDate < inicio ? inicio : hoyDate;
+  const diasRestantes = Math.max(1, diferenciaDias(base, limite) + 1);
+
+  if (item.frecuencia === "diario") {
+    return montoFaltante / diasRestantes;
+  }
+
+  if (item.frecuencia === "semanal") {
+    const semanasRestantes = Math.max(1, Math.ceil(diasRestantes / 7));
+    return montoFaltante / semanasRestantes;
+  }
+
+  const mesesRestantes = Math.max(1, contarMesesInclusivos(base, limite));
+  return montoFaltante / mesesRestantes;
+}
+
+function diferenciaDias(fechaA, fechaB) {
+  const ms = fechaB.getTime() - fechaA.getTime();
+  return Math.floor(ms / 86400000);
+}
+
+function contarMesesInclusivos(fechaInicio, fechaFin) {
+  const yearDiff = fechaFin.getFullYear() - fechaInicio.getFullYear();
+  const monthDiff = fechaFin.getMonth() - fechaInicio.getMonth();
+  return yearDiff * 12 + monthDiff + 1;
+}
+
+function editarProrrateo(id) {
+  const item = prorrateos.find((pr) => pr.id === id);
+
+  if (!item) {
+    mostrarToast("No se encontró el prorrateo", "error");
+    return;
+  }
+
+  editandoProrrateoId = id;
+  prNombreInput.value = item.nombre;
+  prTipoInput.value = item.tipo;
+  prMontoObjetivoInput.value = item.montoObjetivo;
+  prMontoSeparadoInput.value = item.montoSeparado;
+  prFechaInicioInput.value = item.fechaInicio;
+  prFechaLimiteInput.value = item.fechaLimite;
+  prCuentaInput.value = item.cuenta;
+  prColorInput.value = item.color || "#c89b5a";
+  prFrecuenciaInput.value = item.frecuencia;
+
+  btnSubmitProrrateo.textContent = "Guardar cambios";
+  btnCancelarProrrateoEdicion.classList.remove("hidden");
+  prorrateoModalTitle.textContent = "Editar prorrateo";
+  abrirModalNuevoProrrateo();
+}
+
+function eliminarProrrateo(id) {
+  if (!confirm("¿Seguro que quieres eliminar este prorrateo?")) return;
+
+  prorrateos = prorrateos.filter((item) => item.id !== id);
+
+  if (editandoProrrateoId === id) {
+    resetFormularioProrrateo();
+  }
+
+  guardarProrrateos();
+  renderProrrateo();
+  mostrarToast("Prorrateo eliminado", "success");
+}
+
+function cancelarEdicionProrrateo() {
+  resetFormularioProrrateo();
+  cerrarModalProrrateo();
+  mostrarToast("Edición cancelada", "success");
+}
+
+function sumarDineroProrrateo(id) {
+  const item = prorrateos.find((pr) => pr.id === id);
+
+  if (!item) {
+    mostrarToast("No se encontró el prorrateo", "error");
+    return;
+  }
+
+  const ingreso = prompt(`¿Cuánto deseas sumar a "${item.nombre}"?`, "0");
+
+  if (ingreso === null) return;
+
+  const monto = Number(ingreso);
+
+  if (!monto || isNaN(monto) || monto <= 0) {
+    mostrarToast("Monto inválido", "error");
+    return;
+  }
+
+  item.montoSeparado = Number(item.montoSeparado || 0) + monto;
+  guardarProrrateos();
+  renderProrrateo();
+  mostrarToast("Monto agregado correctamente", "success");
+  vibrarSuave();
+}
+
+// UTILIDADES GENERALES
 function resetFormulario() {
   form.reset();
   editandoId = null;
@@ -1867,6 +2443,11 @@ function capitalizarTexto(texto) {
     .join(" ");
 }
 
+function capitalizarPrimeraLetra(texto) {
+  if (!texto) return "";
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
   mensaje.className = `mensaje ${tipo}`;
@@ -1889,6 +2470,9 @@ function escapeHTML(texto) {
 
 window.editarMovimiento = editarMovimiento;
 window.eliminarMovimiento = eliminarMovimiento;
+window.editarProrrateo = editarProrrateo;
+window.eliminarProrrateo = eliminarProrrateo;
+window.sumarDineroProrrateo = sumarDineroProrrateo;
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
