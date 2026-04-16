@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Finanzas Personales</title>
+
+  <meta name="theme-color" content="#1b1a19" />
+  <meta
+    name="description"
+    content="App web de finanzas personales con movimientos, presupuestos, hábitos, gráficos, prorrateo, PIN y notificaciones push."
+  />
+
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+</head>
+<body>
+  <!-- BOTÓN MENÚ -->
+  <button id="menu-toggle" class="menu-toggle hidden" type="button" aria-label="Abrir menú">
+    ☰
+  </button>
+
+  <!-- OVERLAY MENÚ -->
+  <div id="menu-overlay" class="menu-overlay"></div>
+
+  <!-- MENÚ LATERAL -->
+  <aside id="side-menu" class="side-menu" aria-label="Menú principal">
+    <div class="side-menu-header">
+      <h2>Finanzas</h2>
+    </div>
+
+    <nav class="side-menu-nav">
+      <button class="menu-link active" type="button" data-section="registro">Registro</button>
+      <button class="menu-link" type="button" data-section="dashboard">Dashboard</button>
+      <button class="menu-link" type="button" data-section="historial">Historial</button>
+      <button class="menu-link" type="button" data-section="presupuesto">Presupuestos</button>
+      <button class="menu-link" type="button" data-section="habitos">Hábitos</button>
+      <button class="menu-link" type="button" data-section="categorias">Categorías</button>
+      <button class="menu-link" type="button" data-section="seguridad">Seguridad</button>
+      <button class="menu-link" type="button" data-section="prorrateo">Prorrateo</button>
+    </nav>
+  </aside>
+
+  <!-- LOCK SCREEN -->
+  <section id="lock-screen" class="lock-screen">
+    <div class="lock-card">
+      <h2 id="lock-title">Configura tu PIN</h2>
+      <p id="lock-description" class="section-note">
+        Crea un PIN de 4 dígitos para proteger tu app.
+      </p>
+
+      <form id="lock-form">
+        <div id="lock-unlock-group" class="field hidden">
+          <label for="lock-pin">PIN</label>
+          <input
+            id="lock-pin"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            autocomplete="off"
+            placeholder="1234"
+          />
+        </div>
+
+        <div id="lock-setup-group">
+          <div class="security-grid">
+            <div class="field">
+              <label for="lock-pin-new">Nuevo PIN</label>
+              <input
+                id="lock-pin-new"
+                type="password"
+                inputmode="numeric"
+                maxlength="4"
+                autocomplete="off"
+                placeholder="1234"
+              />
+            </div>
+
+            <div class="field">
+              <label for="lock-pin-confirm">Confirmar PIN</label>
+              <input
+                id="lock-pin-confirm"
+                type="password"
+                inputmode="numeric"
+                maxlength="4"
+                autocomplete="off"
+                placeholder="1234"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="lock-actions">
+          <button id="lock-submit" class="btn btn-primary" type="submit">
+            Guardar PIN
+          </button>
+        </div>
+
+        <div id="lock-message" class="mensaje"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <main id="app-container" class="app hidden">
+    <header class="app-header">
+      <h1>Finanzas Personales</h1>
+      <p class="subtitle">
+        Registra tus ingresos y egresos, analiza hábitos, controla presupuestos y organiza tu prorrateo.
+      </p>
+    </header>
+
+    <!-- REGISTRO -->
+    <section id="registro" class="app-section card active-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Registro de movimientos</h2>
+          <p class="section-note">
+            Agrega ingresos y egresos, con gasto o inversión como subtipo.
+          </p>
+        </div>
+
+        <div class="history-header-actions">
+          <button id="btn-open-modal-top" class="btn btn-primary" type="button">
+            Nuevo movimiento
+          </button>
+
+          <button id="activar-notificaciones" class="btn btn-secondary" type="button">
+            Activar notificaciones
+          </button>
+        </div>
+      </div>
+
+      <div class="inner-section card">
+        <div class="section-header">
+          <h3 class="section-title">Filtros y exportación</h3>
+        </div>
+
+        <div class="filters-grid">
+          <div class="field">
+            <label for="filtro-tipo">Filtrar por tipo</label>
+            <select id="filtro-tipo">
+              <option value="todos">Todos</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="egreso">Egresos</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="filtro-mes">Filtrar por mes</label>
+            <input id="filtro-mes" type="month" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="btn-limpiar-filtros" class="btn btn-secondary" type="button">
+            Limpiar filtros
+          </button>
+
+          <button id="btn-exportar-csv" class="btn btn-secondary" type="button">
+            Exportar CSV
+          </button>
+        </div>
+
+        <div id="mensaje" class="mensaje"></div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="app-section card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Dashboard</h2>
+          <p class="section-note">Totales rápidos y evolución del saldo.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="stat-card">
+          <span class="stat-label">Total ingresos</span>
+          <strong id="total-ingresos">S/ 0.00</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Total egresos</span>
+          <strong id="total-egresos">S/ 0.00</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-label">Balance total</span>
+          <strong id="balance-total">S/ 0.00</strong>
+        </article>
+      </div>
+
+      <div class="inner-section card chart-card">
+        <div class="chart-header">
+          <div>
+            <h3 class="section-title">Saldo acumulado</h3>
+            <div class="chart-balance">
+              <span class="chart-balance-label">Saldo actual</span>
+              <strong id="saldo-actual-grafico" class="chart-balance-value">S/ 0.00</strong>
+            </div>
+          </div>
+
+          <div class="balance-chart-info">
+            <span class="mini-legend-item">
+              <span class="mini-legend-color mini-legend-balance"></span>
+              Tramo positivo
+            </span>
+            <span class="mini-legend-item">
+              <span class="mini-legend-color mini-legend-drop"></span>
+              Tramo con caída
+            </span>
+          </div>
+        </div>
+
+        <div id="balance-chart-empty-state" class="empty-state">
+          Aún no hay suficientes datos para mostrar el gráfico de saldo acumulado.
+        </div>
+
+        <div id="balance-chart-wrapper">
+          <div id="chart-tooltip" class="chart-tooltip">
+            <div id="chart-tooltip-date" class="chart-tooltip-date"></div>
+            <div id="chart-tooltip-value" class="chart-tooltip-value"></div>
+          </div>
+
+          <div id="line-canvas-scroll" class="line-canvas-scroll">
+            <canvas
+              id="grafico-saldo-acumulado"
+              width="900"
+              height="320"
+            ></canvas>
+          </div>
+
+          <div id="chart-range-scroll" class="chart-range-scroll">
+            <canvas
+              id="grafico-saldo-navigator"
+              width="900"
+              height="84"
+            ></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section id="historial" class="app-section card">
+      <div class="history-header">
+        <div>
+          <h2 class="section-title">Historial de movimientos</h2>
+          <p id="contador-movimientos" class="history-count">0 movimientos</p>
+        </div>
+      </div>
+
+      <div id="history-list" class="history-list">
+        <div class="empty-state">No hay movimientos registrados todavía.</div>
+      </div>
+    </section>
+
+    <!-- PRESUPUESTOS -->
+    <section id="presupuesto" class="app-section card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Presupuestos mensuales</h2>
+          <p class="section-note">
+            Define un tope mensual y compara contra tus egresos reales.
+          </p>
+        </div>
+      </div>
+
+      <div class="inner-section card">
+        <form id="form-presupuesto">
+          <div class="budget-form-grid">
+            <div class="field">
+              <label for="presupuesto-mes">Mes</label>
+              <input id="presupuesto-mes" type="month" />
+            </div>
+
+            <div class="field">
+              <label for="presupuesto-monto">Monto presupuesto</label>
+              <input
+                id="presupuesto-monto"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar presupuesto</button>
+            <button id="btn-eliminar-presupuesto" class="btn btn-delete hidden" type="button">
+              Eliminar presupuesto
+            </button>
+          </div>
+        </form>
+
+        <div id="mensaje-presupuesto" class="mensaje"></div>
+      </div>
+
+      <div class="inner-section card">
+        <div class="budget-summary-header">
+          <h3 id="budget-title" class="budget-title">Resumen del presupuesto</h3>
+        </div>
+
+        <div class="budget-cards-grid">
+          <article class="budget-card">
+            <span class="stat-label">Presupuesto</span>
+            <strong id="budget-total">S/ 0.00</strong>
+          </article>
+
+          <article class="budget-card">
+            <span class="stat-label">Gastado</span>
+            <strong id="budget-spent">S/ 0.00</strong>
+          </article>
+
+          <article class="budget-card">
+            <span class="stat-label">Disponible</span>
+            <strong id="budget-remaining">—</strong>
+          </article>
+
+          <article class="budget-card">
+            <span class="stat-label">Uso</span>
+            <strong id="budget-percent">—</strong>
+          </article>
+        </div>
+
+        <div class="budget-progress-wrap">
+          <div class="budget-progress-top">
+            <strong id="budget-status-label">Sin presupuesto configurado</strong>
+            <span id="budget-progress-text">—</span>
+          </div>
+          <div class="budget-progress-track">
+            <div id="budget-progress-fill" class="budget-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HÁBITOS -->
+    <section id="habitos" class="app-section card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Análisis de hábitos</h2>
+          <p class="section-note">
+            Lectura rápida de patrones visibles según los filtros actuales.
+          </p>
+        </div>
+      </div>
+
+      <div id="habitos-empty-state" class="empty-state hidden">
+        No hay datos suficientes para analizar hábitos.
+      </div>
+
+      <div id="habitos-grid" class="habits-grid">
+        <article class="habit-card">
+          <span class="habit-label">Mayor categoría de egreso</span>
+          <strong id="habit-top-category">—</strong>
+          <p id="habit-top-category-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Promedio de egresos</span>
+          <strong id="habit-average-expense">—</strong>
+          <p id="habit-average-expense-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Día con mayor egreso</span>
+          <strong id="habit-top-day">—</strong>
+          <p id="habit-top-day-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Conteo visible</span>
+          <strong id="habit-movement-count">—</strong>
+          <p id="habit-movement-count-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Egreso más repetido</span>
+          <strong id="habit-most-repeated-expense">—</strong>
+          <p id="habit-most-repeated-expense-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Semana vs fin de semana</span>
+          <strong id="habit-week-pattern">—</strong>
+          <p id="habit-week-pattern-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Racha de egresos</span>
+          <strong id="habit-expense-streak">—</strong>
+          <p id="habit-expense-streak-detail" class="habit-detail">Sin datos</p>
+        </article>
+
+        <article class="habit-card">
+          <span class="habit-label">Categoría que más creció</span>
+          <strong id="habit-growing-category">—</strong>
+          <p id="habit-growing-category-detail" class="habit-detail">Sin datos</p>
+        </article>
+      </div>
+
+      <div class="insights-box">
+        <h3 class="insights-title">Conclusiones rápidas</h3>
+        <div id="habitos-insights" class="insights-list">
+          <div class="insight-item">Aún no hay datos para mostrar conclusiones.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATEGORÍAS -->
+    <section id="categorias" class="app-section card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Categorías</h2>
+          <p class="section-note">
+            Distribución de egresos por categoría y gráfico circular.
+          </p>
+        </div>
+      </div>
+
+      <div class="inner-section card">
+        <div id="chart-empty-state" class="empty-state">
+          No hay egresos suficientes para mostrar el gráfico circular.
+        </div>
+
+        <div id="chart-wrapper" class="chart-wrapper hidden">
+          <div class="chart-canvas-box">
+            <canvas
+              id="grafico-categorias"
+              width="260"
+              height="260"
+            ></canvas>
+          </div>
+
+          <div id="chart-legend" class="chart-legend"></div>
+        </div>
+      </div>
+
+      <div class="inner-section card">
+        <h3 class="section-title">Resumen por categoría</h3>
+        <div id="categorias-resumen" class="categories-list">
+          <div class="empty-state">No hay categorías para mostrar.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEGURIDAD -->
+    <section id="seguridad" class="app-section card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Seguridad</h2>
+          <p class="section-note">
+            Configura o cambia tu PIN y bloquea la app manualmente.
+          </p>
+        </div>
+      </div>
+
+      <div class="security-status-box">
+        <strong>Estado:</strong>
+        <span id="security-status-text">Sin configurar</span>
+      </div>
+
+      <form id="security-form" class="inner-section card">
+        <div class="security-grid">
+          <div id="security-current-group" class="field hidden">
+            <label for="security-current-pin">PIN actual</label>
+            <input
+              id="security-current-pin"
+              type="password"
+              inputmode="numeric"
+              maxlength="4"
+              autocomplete="off"
+              placeholder="1234"
+            />
+          </div>
+
+          <div class="field">
+            <label for="security-new-pin">Nuevo PIN</label>
+            <input
+              id="security-new-pin"
+              type="password"
+              inputmode="numeric"
+              maxlength="4"
+              autocomplete="off"
+              placeholder="1234"
+            />
+          </div>
+
+          <div class="field">
+            <label for="security-confirm-pin">Confirmar PIN</label>
+            <input
+              id="security-confirm-pin"
+              type="password"
+              inputmode="numeric"
+              maxlength="4"
+              autocomplete="off"
+              placeholder="1234"
+            />
+          </div>
+        </div>
+
+        <div class="security-actions">
+          <button id="btn-save-pin" class="btn btn-primary" type="submit">
+            Configurar PIN
+          </button>
+
+          <button id="btn-delete-pin" class="btn btn-delete hidden" type="button">
+            Eliminar PIN
+          </button>
+
+          <button id="btn-lock-now" class="btn btn-secondary hidden" type="button">
+            Bloquear ahora
+          </button>
+        </div>
+
+        <div id="security-message" class="mensaje"></div>
+      </form>
+    </section>
+
+    <!-- PRORRATEO -->
+    <section id="prorrateo" class="app-section card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Prorrateo</h2>
+          <p class="section-note">
+            Organiza metas y gastos futuros con avance real vs ideal.
+          </p>
+        </div>
+
+        <div>
+          <button id="btn-open-prorrateo-modal-top" class="btn btn-primary" type="button">
+            Nuevo prorrateo
+          </button>
+        </div>
+      </div>
+
+      <div id="prorrateo-resumen" class="prorrateo-summary-grid">
+        <div class="empty-state">Aún no tienes metas o gastos futuros registrados.</div>
+      </div>
+
+      <div class="inner-section card pr-calendar-wrap">
+        <div class="pr-calendar-header">
+          <button id="pr-btn-prev-month" class="btn btn-secondary" type="button">
+            ←
+          </button>
+
+          <h3 id="pr-calendar-title" class="pr-calendar-title">Calendario</h3>
+
+          <button id="pr-btn-next-month" class="btn btn-secondary" type="button">
+            →
+          </button>
+        </div>
+
+        <div class="pr-calendar-weekdays">
+          <div>Lun</div>
+          <div>Mar</div>
+          <div>Mié</div>
+          <div>Jue</div>
+          <div>Vie</div>
+          <div>Sáb</div>
+          <div>Dom</div>
+        </div>
+
+        <div id="pr-calendar-grid" class="pr-calendar-grid"></div>
+      </div>
+
+      <div id="prorrateo-list" class="prorrateo-list">
+        <div class="empty-state">No tienes prorrateos creados todavía.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL MOVIMIENTO -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-title" class="section-title">Nuevo movimiento</h2>
+          <p class="section-note">
+            Completa los datos del movimiento.
+          </p>
+        </div>
+
+        <button id="btn-close-modal" class="modal-close" type="button" aria-label="Cerrar modal">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-movimiento">
+        <div class="form-grid">
+          <div class="field">
+            <label for="tipo">Tipo</label>
+            <select id="tipo">
+              <option value="ingreso">Ingreso</option>
+              <option value="egreso">Egreso</option>
+            </select>
+          </div>
+
+          <div id="subtipo-egreso-group" class="field hidden">
+            <label for="subtipo-egreso">Subtipo de egreso</label>
+            <select id="subtipo-egreso">
+              <option value="">Selecciona</option>
+              <option value="gasto">Gasto</option>
+              <option value="inversion">Inversión</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="categoria">Categoría</label>
+            <input
+              id="categoria"
+              type="text"
+              placeholder="Ej. Comida"
+            />
+            <small id="hint-categoria" class="input-hint"></small>
+          </div>
+
+          <div class="field field-full">
+            <label for="descripcion">Descripción</label>
+            <input
+              id="descripcion"
+              type="text"
+              placeholder="Ej. Almuerzo en oficina"
+            />
+            <small id="hint-descripcion" class="input-hint"></small>
+          </div>
+
+          <div class="field">
+            <label for="monto">Monto</label>
+            <input
+              id="monto"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="field">
+            <label for="fecha">Fecha</label>
+            <input id="fecha" type="date" />
+          </div>
+        </div>
+
+        <div class="movimiento-actions">
+          <button id="btn-submit" class="btn btn-primary" type="submit">
+            Guardar movimiento
+          </button>
+
+          <button id="btn-cancelar-edicion" class="btn btn-secondary hidden" type="button">
+            Cancelar edición
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL PRORRATEO -->
+  <div id="prorrateo-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="prorrateo-modal-title" class="section-title">Nuevo prorrateo</h2>
+          <p class="section-note">
+            Registra metas o gastos futuros para calcular cuánto separar.
+          </p>
+        </div>
+
+        <button
+          id="btn-close-prorrateo-modal"
+          class="modal-close"
+          type="button"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </div>
+
+      <form id="form-prorrateo">
+        <div class="form-grid">
+          <div class="field">
+            <label for="pr-nombre">Nombre</label>
+            <input id="pr-nombre" type="text" placeholder="Ej. Laptop nueva" />
+          </div>
+
+          <div class="field">
+            <label for="pr-tipo">Tipo</label>
+            <select id="pr-tipo">
+              <option value="">Selecciona</option>
+              <option value="meta">Meta</option>
+              <option value="gasto-futuro">Gasto futuro</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="pr-monto-objetivo">Monto objetivo</label>
+            <input
+              id="pr-monto-objetivo"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="field">
+            <label for="pr-monto-separado">Monto ya separado</label>
+            <input
+              id="pr-monto-separado"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="field">
+            <label for="pr-fecha-inicio">Fecha de inicio</label>
+            <input id="pr-fecha-inicio" type="date" />
+          </div>
+
+          <div class="field">
+            <label for="pr-fecha-limite">Fecha límite</label>
+            <input id="pr-fecha-limite" type="date" />
+          </div>
+
+          <div class="field">
+            <label for="pr-cuenta">Cuenta o fuente</label>
+            <input id="pr-cuenta" type="text" placeholder="Ej. Ahorros BCP" />
+          </div>
+
+          <div class="field">
+            <label for="pr-frecuencia">Frecuencia</label>
+            <select id="pr-frecuencia">
+              <option value="">Selecciona</option>
+              <option value="diario">Diario</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="pr-color">Color</label>
+            <input id="pr-color" type="color" value="#c89b5a" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="btn-submit-prorrateo" class="btn btn-primary" type="submit">
+            Guardar prorrateo
+          </button>
+
+          <button
+            id="btn-cancelar-prorrateo-edicion"
+            class="btn btn-secondary hidden"
+            type="button"
+          >
+            Cancelar edición
+          </button>
+        </div>
+
+        <div id="mensaje-prorrateo" class="mensaje"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button
+    id="fab-open-modal"
+    class="fab"
+    type="button"
+    aria-label="Nuevo movimiento"
+  >
+    +
+  </button>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
