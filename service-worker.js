@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
 
@@ -176,3 +177,58 @@ self.addEventListener("notificationclick", (event) => {
 self.addEventListener("notificationclose", () => {
   // reservado para futura analítica
 });
+=======
+const CACHE_NAME = "finanzas-app-v2";
+
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./app.js",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
+];
+
+// INSTALAR
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(ASSETS))
+  );
+});
+
+// ACTIVAR
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
+  );
+
+  self.clients.claim();
+});
+
+// FETCH
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+>>>>>>> b460fcc672ad5ec39bad48feb364f295c16c8e1e
