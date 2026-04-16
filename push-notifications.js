@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js";
 
 const firebaseConfig = {
-  BBs6Twuxx0jl_XtZw_tAeqpb_pn5iCOkFMwUrx__8hc3HB85JU3lkkZQOfnOoPJT9ti7UVo62pAw5ohQobGcUSw,
+  apiKey: "AIzaSyD0WkuS9Ffg3jk3Azrboxy2xCdinzt7Tk0",
   authDomain: "finanzas-app-2b2e9.firebaseapp.com",
   projectId: "finanzas-app-2b2e9",
   storageBucket: "finanzas-app-2b2e9.appspot.com",
@@ -15,13 +15,11 @@ const firebaseConfig = {
   appId: "1:601169370641:web:da4af945221733d0011bb0"
 };
 
-BBs6Twuxx0jl_XtZw_tAeqpb_pn5iCOkFMwUrx__8hc3HB85JU3lkkZQOfnOoPJT9ti7UVo62pAw5ohQobGcUSw
-const TOKEN_STORAGE_KEY = "finanzas_fcm_token";
-if (!BACKEND_URL) {
-  console.log("Sin backend, token solo en consola:", token);
-  return;
-}
+const VAPID_KEY = "BBs6Twuxx0jl_XtZw_tAeqpb_pn5iCOkFMwUrx__8hc3HB85JU3lkkZQOfnOoPJT9ti7UVo62pAw5ohQobGcUSw";
 
+const BACKEND_URL = "";
+
+const TOKEN_STORAGE_KEY = "finanzas_fcm_token";
 let foregroundListenerAttached = false;
 
 function obtenerFirebaseApp() {
@@ -67,6 +65,12 @@ async function enviarTokenAlBackend(token) {
 
   if (tokenPrevio === token) {
     console.log("El token FCM no cambió; no se reenviará al backend.");
+    return;
+  }
+
+  if (!BACKEND_URL) {
+    console.log("Sin backend configurado. Token disponible solo en consola:", token);
+    guardarTokenLocal(token);
     return;
   }
 
