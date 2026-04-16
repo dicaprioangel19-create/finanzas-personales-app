@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
 
@@ -177,7 +176,7 @@ self.addEventListener("notificationclick", (event) => {
 self.addEventListener("notificationclose", () => {
   // reservado para futura analítica
 });
-=======
+
 const CACHE_NAME = "finanzas-app-v2";
 
 const ASSETS = [
