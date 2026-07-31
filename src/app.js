@@ -20,7 +20,8 @@ import {
   configurarPresupuesto,
   manejarSubmitPresupuesto,
   eliminarPresupuestoMesActual,
-  renderPresupuestoMensual
+  renderPresupuestoMensual,
+  obtenerEgresoDelMes
 } from "./modules/presupuesto.js";
 
 import {

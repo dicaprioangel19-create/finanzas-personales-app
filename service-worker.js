@@ -11,8 +11,8 @@ const APP_SHELL = [
   "./",
   "./index.html",
   "./style.css",
-  "./app.js",
-  "./push-notifications.js",
+  "./src/app.js",
+  "./src/services/push-notifications.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
@@ -37,13 +37,26 @@ const messaging = firebase.messaging();
    INSTALL
 ========================= */
 
-self.addEventListener("install", (event) => {
+/* =========================
+   INSTALL
+========================= */
+
+self.addEventListener("install", async (event) => {
   self.skipWaiting();
 
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
-    })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      for (const archivo of APP_SHELL) {
+        try {
+          await cache.add(archivo);
+          console.log("OK:", archivo);
+        } catch (e) {
+          console.error("ERROR:", archivo, e);
+        }
+      }
+    })()
   );
 });
 
@@ -83,8 +96,12 @@ self.addEventListener("fetch", (event) => {
           const clone = response.clone();
 
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
+  const url = new URL(event.request.url);
+
+  if (url.protocol === "http:" || url.protocol === "https:") {
+    cache.put(event.request, clone).catch(() => {});
+  }
+});
 
           return response;
         })

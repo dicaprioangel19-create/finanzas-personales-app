@@ -220,9 +220,14 @@ function obtenerMesPresupuestoActivo() {
 
 function obtenerEgresoDelMes(mesISO) {
   return movimientos
-    .filter((mov) => mov.tipo === "egreso" && String(mov.fechaISO || "").startsWith(mesISO))
+    .filter(
+      (mov) =>
+        mov.tipo === "egreso" &&
+        String(mov.fechaISO || "").startsWith(mesISO)
+    )
     .reduce((acc, mov) => acc + Number(mov.monto || 0), 0);
 }
+
 
 /* =========================
    HELPERS LOCALES
